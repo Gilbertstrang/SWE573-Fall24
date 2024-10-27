@@ -20,7 +20,7 @@ import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 @Service
 public class UserService {
 
-    UserRepo userRepo;
+    private UserRepo userRepo;
     UserModelAssembler assembler;
 
     public UserService(UserRepo userRepo) {
