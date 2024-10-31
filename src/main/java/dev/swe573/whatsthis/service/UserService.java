@@ -21,10 +21,11 @@ import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 public class UserService {
 
     private UserRepo userRepo;
-    UserModelAssembler assembler;
+    private final UserModelAssembler assembler;
 
-    public UserService(UserRepo userRepo) {
+    public UserService(UserRepo userRepo, UserModelAssembler assembler) {
         this.userRepo = userRepo;
+        this.assembler = assembler;
     }
 
     public CollectionModel<EntityModel<User>> all() {

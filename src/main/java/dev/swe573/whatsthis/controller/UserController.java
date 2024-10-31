@@ -15,13 +15,15 @@ import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 
 @RestController
-@RequestMapping("/users")
+@RequestMapping("/api/users")
 public class UserController {
     private final UserService userService;
+    private final UserModelAssembler assembler;
 
 
-    UserController(UserService userService) {
+    UserController(UserService userService, UserModelAssembler assembler) {
         this.userService = userService;
+        this.assembler = assembler;
     }
 
     @GetMapping("/users")
