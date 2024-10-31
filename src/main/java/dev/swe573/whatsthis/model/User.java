@@ -1,9 +1,6 @@
 package dev.swe573.whatsthis.model;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.Data;
 
 @Entity
@@ -11,8 +8,9 @@ import lombok.Data;
 @Data
 public class User {
 
-    private @Id
-    @GeneratedValue Long id;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
     private String username;
     private String email;

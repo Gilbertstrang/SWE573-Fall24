@@ -12,9 +12,11 @@ import java.util.Optional;
 @Service
 public class PostService {
     private PostRepo postRepo;
+    private UserService userService;
 
     public PostService(PostRepo postRepo) {
         this.postRepo = postRepo;
+
     }
 
     public List<Post> all(Optional<Long> userId) {
