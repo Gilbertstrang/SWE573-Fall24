@@ -2,6 +2,7 @@ package dev.swe573.whatsthis.service;
 
 import dev.swe573.whatsthis.controller.PostNotFoundException;
 import dev.swe573.whatsthis.controller.UserNotFoundException;
+import dev.swe573.whatsthis.dto.TagDto;
 import dev.swe573.whatsthis.model.Post;
 import dev.swe573.whatsthis.repository.PostRepo;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,6 +22,9 @@ public class PostService {
 
     }
 
+    @Autowired
+    private TagService tagService;
+
     public List<Post> all() {
         return postRepo.findAll();
     }
@@ -31,6 +35,10 @@ public class PostService {
 
     public Post newPost(Post post) {
         return postRepo.save(post);
+    }
+
+    public List<TagDto> getTagSuggestions(String query) {
+        return tagService.searchTags(query);
     }
 
     public Post updatePost(Long id, Post updatedPost) {

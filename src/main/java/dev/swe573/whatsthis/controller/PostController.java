@@ -1,6 +1,7 @@
 package dev.swe573.whatsthis.controller;
 
 import dev.swe573.whatsthis.dto.PostDto;
+import dev.swe573.whatsthis.dto.TagDto;
 import dev.swe573.whatsthis.model.Post;
 import dev.swe573.whatsthis.model.User;
 import dev.swe573.whatsthis.service.PostService;
@@ -68,6 +69,11 @@ public class PostController {
     @PutMapping("/{id}")
     public Post updatePost (@PathVariable Long id, @RequestBody Post post) {
         return postService.updatePost(id, post);
+    }
+
+    @GetMapping("/tags")
+    public List<TagDto> getTagSuggestions(@RequestParam String query) {
+        return postService.getTagSuggestions(query);
     }
 
     @PostMapping("/{id}/upvote")
