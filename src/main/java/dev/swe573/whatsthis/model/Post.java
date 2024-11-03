@@ -74,6 +74,10 @@ public class Post {
     @Column(name = "image_url")
     private List<String> imageUrls;
 
+    //maybe we can add videos too
+
+
+
     @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Comment> comments;
 

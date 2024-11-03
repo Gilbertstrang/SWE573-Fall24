@@ -33,6 +33,7 @@ public class TagService {
 
         if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
             return response.getBody().getSearch().stream().map(entity -> new TagDto(
+                    entity.getId(),
                     entity.getLabel(),
                     entity.getDescription(),
                     entity.getWikiUrl()

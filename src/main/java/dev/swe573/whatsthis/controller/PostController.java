@@ -1,5 +1,6 @@
 package dev.swe573.whatsthis.controller;
 
+import dev.swe573.whatsthis.dto.CommentDto;
 import dev.swe573.whatsthis.dto.PostDto;
 import dev.swe573.whatsthis.dto.TagDto;
 import dev.swe573.whatsthis.model.Post;
@@ -7,12 +8,18 @@ import dev.swe573.whatsthis.model.User;
 import dev.swe573.whatsthis.service.PostService;
 import dev.swe573.whatsthis.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.hateoas.CollectionModel;
+import org.springframework.hateoas.EntityModel;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
+
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 
 @RestController
 @RequestMapping("/api/posts")
@@ -27,48 +34,67 @@ public class PostController {
         this.userService = userService;
     }
 
+    //Get all posts
     @GetMapping
-    public List<Post> all() {
-        return postService.all();
+    public CollectionModel<EntityModel<PostDto>> all() {
+        List<EntityModel<PostDto>> posts = postService.all().stream()
+                .map(postDto -> EntityModel.of(postDto,
+                        linkTo(methodOn(PostController.class).one(postDto.getId())).withSelfRel(),
+                        linkTo(methodOn(PostController.class).all()).withRel("all-posts"),
+                        linkTo(methodOn(PostController.class).getCommentsByPost(postDto.getId())).withRel("comments")
+                )).collect(Collectors.toList());
+
+        return CollectionModel.of(posts, linkTo(methodOn(PostController.class).all()).withSelfRel());
     }
 
+    //Get a post by id
     @GetMapping("/{id}")
-    public Optional<Post> one(@PathVariable Long id) {
-        return postService.one(id);
+    public EntityModel<PostDto> one(@PathVariable Long id) {
+        PostDto postDto = postService.one(id);
+        EntityModel<PostDto> postModel = EntityModel.of(postDto,
+                linkTo(methodOn(PostController.class).one(id)).withSelfRel(),
+                linkTo(methodOn(PostController.class).all()).withRel("all-posts"),
+                linkTo(methodOn(PostController.class).getCommentsByPost(id)).withRel("comments"));
+
+        return postModel;
     }
 
+    //Create new post
     @PostMapping
-    public ResponseEntity<Post> newPost (@RequestBody PostDto postDto) {
-        Post post = new Post();
-        post.setTitle(postDto.getTitle());
-        post.setDescription(postDto.getDescription());
+    public EntityModel<PostDto> newPost (@RequestBody PostDto postDto) {
+        PostDto createdPost = postService.newPost(postDto);
 
-        post.setTags(postDto.getTags());
-        post.setImageUrls(postDto.getImageUrls());
+        EntityModel<PostDto> postModel = EntityModel.of(createdPost,
+                linkTo(methodOn(PostController.class).one(createdPost.getId())).withSelfRel(),
+                linkTo(methodOn(PostController.class).all()).withRel("all-posts"));
 
+        return postModel;
 
-        User user = userService.one(postDto.getUserId()).getContent();
-        post.setUser(user);
-
-
-        post.setMaterial(postDto.getMaterial());
-        post.setSize(postDto.getSize());
-        post.setColor(postDto.getColor());
-        post.setShape(postDto.getShape());
-        post.setWeight(postDto.getWeight());
-        post.setLocation(postDto.getLocation());
-        post.setTimePeriod(postDto.getTimePeriod());
-        post.setPattern(postDto.getPattern());
-        post.setHandmade(postDto.getHandmade());
-        post.setFunctionality(postDto.getFunctionality());
-
-        Post createdPost = postService.newPost(post);
-        return ResponseEntity.status(HttpStatus.CREATED).body(createdPost);
     }
 
+    //Update existing post
     @PutMapping("/{id}")
-    public Post updatePost (@PathVariable Long id, @RequestBody Post post) {
-        return postService.updatePost(id, post);
+    public EntityModel<PostDto> updatePost (@PathVariable Long id, @RequestBody PostDto postDto) {
+        postDto.setId(id);
+
+        PostDto updatedPost = postService.updatePost(postDto);
+        EntityModel<PostDto> postModel = EntityModel.of(updatedPost,
+                linkTo(methodOn(PostController.class).one(id)).withSelfRel(),
+                linkTo(methodOn(PostController.class).all()).withRel("all-posts"));
+
+        return postModel;
+    }
+
+    @GetMapping("/{postId}/comments")
+    public CollectionModel<EntityModel<CommentDto>> getCommentsByPost(@PathVariable Long postId) {
+        List<CommentDto> comments = commentService.one(postId);
+        List<EntityModel<CommentDto>> commentModels = comments.stream()
+                .map(commentDTO -> EntityModel.of(commentDTO,
+                        linkTo(methodOn(PostController.class).getCommentsByPost(postId)).withRel("post-comments"),
+                        linkTo(methodOn(PostController.class).one(postId)).withRel("post")))
+                .collect(Collectors.toList());
+
+        return CollectionModel.of(commentModels, linkTo(methodOn(PostController.class).getCommentsByPost(postId)).withSelfRel());
     }
 
     @GetMapping("/tags")

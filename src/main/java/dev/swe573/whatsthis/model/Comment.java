@@ -7,15 +7,14 @@ import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 
 @Entity
-@Table(name="comment")
 @Data
 public class Comment {
-    private @Id
-    @GeneratedValue Long id;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name="postId", nullable = false)
-    @OnDelete(action = OnDeleteAction.NO_ACTION)
     @JsonIgnore
     Post post;
 
