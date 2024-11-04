@@ -1,11 +1,11 @@
 package dev.swe573.whatsthis.controller;
 
-import dev.swe573.whatsthis.assembler.UserModelAssembler;
-import dev.swe573.whatsthis.model.User;
-import dev.swe573.whatsthis.repository.UserRepo;
+import dev.swe573.whatsthis.dto.UserDto;
 import dev.swe573.whatsthis.service.UserService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.hateoas.CollectionModel;
 import org.springframework.hateoas.EntityModel;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -18,36 +18,66 @@ import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 @RequestMapping("/api/users")
 public class UserController {
     private final UserService userService;
-    private final UserModelAssembler assembler;
 
-
-    UserController(UserService userService, UserModelAssembler assembler) {
+    @Autowired
+    UserController(UserService userService) {
         this.userService = userService;
-        this.assembler = assembler;
+
     }
 
-    @GetMapping("/users")
-    public CollectionModel<EntityModel<User>> all() {
-        return userService.all();
+    @GetMapping()
+    public CollectionModel<EntityModel<UserDto>> all() {
+        List<EntityModel<UserDto>> users = userService.all().stream()
+                .map(userDto -> {
+                    EntityModel<UserDto> userModel = EntityModel.of(userDto);
+                    userModel.add(linkTo(methodOn(UserController.class).one(userDto.getId())).withSelfRel());
+                    return userModel;
+                })
+                .collect(Collectors.toList());
+
+        return CollectionModel.of(users, linkTo(methodOn(UserController.class).all()).withSelfRel());
     }
 
-    @PostMapping("/users")
-    User newUser(@RequestBody User newUser) {
-        return userService.newUser(newUser);
+    @PostMapping
+    public EntityModel<UserDto> newUser(@RequestBody UserDto userDto) {
+        UserDto createdUser = userService.newUser(userDto);
+
+
+        EntityModel<UserDto> userModel = EntityModel.of(createdUser);
+        userModel.add(linkTo(methodOn(UserController.class).one(createdUser.getId())).withSelfRel());
+        userModel.add(linkTo(methodOn(UserController.class).all()).withRel("users"));
+
+        return userModel;
+
     }
 
-    @GetMapping("/users/{id}")
-    public EntityModel<User> one(@PathVariable Long id) {
-        return userService.one(id);
+    @GetMapping("/{id}")
+    public EntityModel<UserDto> one(@PathVariable Long id) {
+        UserDto userDto = userService.one(id);
+
+
+        EntityModel<UserDto> userModel = EntityModel.of(userDto);
+        userModel.add(linkTo(methodOn(UserController.class).one(id)).withSelfRel());
+        userModel.add(linkTo(methodOn(UserController.class).all()).withRel("users"));
+        //TODO: There should be links that connects user's previous posts and comments.
+
+        return userModel;
     }
 
-    @PutMapping("/users/{id}")
-    User replaceUser(@RequestBody User newUser, @PathVariable Long id) {
-        return userService.replaceUser(newUser, id);
+    @PutMapping("/{id}")
+    public EntityModel<UserDto> replaceUser(@PathVariable Long id, @RequestBody UserDto userDto) {
+        UserDto updatedUser = userService.replaceUser(id, userDto);
+
+        EntityModel<UserDto> userModel = EntityModel.of(updatedUser);
+        userModel.add(linkTo(methodOn(UserController.class).one(id)).withSelfRel());
+        userModel.add(linkTo(methodOn(UserController.class).all()).withRel("users"));
+
+        return userModel;
     }
 
-    @DeleteMapping("/users/{id}")
-    void deleteUser(@PathVariable Long id) {
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> deleteUser(@PathVariable Long id) {
         userService.deleteUser(id);
+        return ResponseEntity.noContent().build();
     }
 }

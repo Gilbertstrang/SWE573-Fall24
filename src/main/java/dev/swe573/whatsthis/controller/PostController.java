@@ -75,11 +75,10 @@ public class PostController {
         postDto.setId(id);
 
         PostDto updatedPost = postService.updatePost(postDto);
-        EntityModel<PostDto> postModel = EntityModel.of(updatedPost,
+
+        return EntityModel.of(updatedPost,
                 linkTo(methodOn(PostController.class).one(id)).withSelfRel(),
                 linkTo(methodOn(PostController.class).all()).withRel("all-posts"));
-
-        return postModel;
     }
 
     @GetMapping("/{postId}/comments")

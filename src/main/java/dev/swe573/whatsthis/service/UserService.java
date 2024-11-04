@@ -1,65 +1,82 @@
 package dev.swe573.whatsthis.service;
 
-import dev.swe573.whatsthis.assembler.UserModelAssembler;
-import dev.swe573.whatsthis.controller.UserController;
+
 import dev.swe573.whatsthis.controller.UserNotFoundException;
+import dev.swe573.whatsthis.dto.UserDto;
 import dev.swe573.whatsthis.model.User;
+import dev.swe573.whatsthis.model.Post;
+import dev.swe573.whatsthis.model.Comment;
 import dev.swe573.whatsthis.repository.UserRepo;
-import org.springframework.hateoas.CollectionModel;
-import org.springframework.hateoas.EntityModel;
+import org.springframework.beans.factory.annotation.Autowired;
+
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestBody;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
-import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
-
 @Service
 public class UserService {
 
-    private UserRepo userRepo;
-    private final UserModelAssembler assembler;
+    private final UserRepo userRepo;
 
-    public UserService(UserRepo userRepo, UserModelAssembler assembler) {
+
+    @Autowired
+    public UserService(UserRepo userRepo) {
         this.userRepo = userRepo;
-        this.assembler = assembler;
     }
 
-    public CollectionModel<EntityModel<User>> all() {
-        List<EntityModel<User>> users = userRepo.findAll().stream()
-                .map(assembler::toModel)
-                .collect(Collectors.toList());
-        return CollectionModel.of(users,linkTo(methodOn(UserController.class).all()).withSelfRel());
+    public List<UserDto> all() {
+        List<User> users = userRepo.findAll();
+        return users.stream().map(this::toDto).collect(Collectors.toList());
     }
 
-    public User newUser(User newUser) {
-        return userRepo.save(newUser);
+    public UserDto newUser(UserDto userDto) {
+        User user = toEntity(userDto);
+        User savedUser = userRepo.save(user);
+        return toDto(savedUser);
     }
 
-    public EntityModel<User> one(@PathVariable Long id) {
+    public UserDto one(@PathVariable Long id) {
         User user = userRepo.findById(id)
-                .orElseThrow( () -> new UserNotFoundException(id));
-        return assembler.toModel(user);
+                .orElseThrow(() -> new UserNotFoundException(id));
+
+        return toDto(user);
     }
 
-    public User replaceUser(@RequestBody User newUser, @PathVariable Long id) {
-        return userRepo.findById(id)
-                .map(user -> {
-                    user.setUsername(newUser.getUsername());
-                    user.setEmail(newUser.getEmail());
-                    user.setPassword(newUser.getPassword());
+    public UserDto replaceUser(Long id, UserDto userDto) {
+        User user = userRepo.findById(id)
+                .orElseThrow(() -> new UserNotFoundException(id));
 
-                    return userRepo.save(user);
-                })
-                .orElseGet(() -> {
-                    return userRepo.save(newUser);
-                });
+        user.setUsername(userDto.getUsername());
+        user.setEmail(userDto.getEmail());
+        user.setPassword(userDto.getPassword());// DANGEROUS TO PUT PASSWORD LIKE THIS MY MAN
+                                                // WE GOING TO SECURE IT LATER :(
+
+        User updatedUser = userRepo.save(user);
+        return toDto(updatedUser);
     }
 
-    public void deleteUser(@PathVariable Long id) {
+    public void deleteUser(Long id) {
         userRepo.deleteById(id);
+    }
+
+    private UserDto toDto(User user) {
+        UserDto userDto = new UserDto();
+        userDto.setId(user.getId());
+        userDto.setUsername(user.getUsername());
+        userDto.setEmail(user.getEmail());
+        userDto.setPassword(user.getPassword()); // DONT FORGET TO REMOVE THIS
+        userDto.setPostIds(user.getPosts().stream().map(Post::getId).collect(Collectors.toList()));
+        userDto.setCommentIds(user.getComments().stream().map(Comment::getId).collect(Collectors.toList()));
+        return userDto;
+    }
+
+    private User toEntity(UserDto userDto) {
+        User user = new User();
+        user.setUsername(userDto.getUsername());
+        user.setEmail(userDto.getEmail());
+        user.setPassword(user.getPassword());// DONT FORGET TO SECURE PASSWORD
+        return user;
     }
 }
