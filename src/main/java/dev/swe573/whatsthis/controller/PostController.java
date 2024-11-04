@@ -3,19 +3,15 @@ package dev.swe573.whatsthis.controller;
 import dev.swe573.whatsthis.dto.CommentDto;
 import dev.swe573.whatsthis.dto.PostDto;
 import dev.swe573.whatsthis.dto.TagDto;
-import dev.swe573.whatsthis.model.Post;
-import dev.swe573.whatsthis.model.User;
+import dev.swe573.whatsthis.service.CommentService;
 import dev.swe573.whatsthis.service.PostService;
 import dev.swe573.whatsthis.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.hateoas.CollectionModel;
 import org.springframework.hateoas.EntityModel;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
@@ -27,6 +23,7 @@ public class PostController {
 
     private PostService postService;
     private UserService userService;
+    private CommentService commentService;
 
     @Autowired
     public PostController(PostService postService, UserService userService) {
@@ -87,7 +84,7 @@ public class PostController {
 
     @GetMapping("/{postId}/comments")
     public CollectionModel<EntityModel<CommentDto>> getCommentsByPost(@PathVariable Long postId) {
-        List<CommentDto> comments = commentService.one(postId);
+        List<CommentDto> comments = commentService.getCommentsByPostId(postId);
         List<EntityModel<CommentDto>> commentModels = comments.stream()
                 .map(commentDTO -> EntityModel.of(commentDTO,
                         linkTo(methodOn(PostController.class).getCommentsByPost(postId)).withRel("post-comments"),

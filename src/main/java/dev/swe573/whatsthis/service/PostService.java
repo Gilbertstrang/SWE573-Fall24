@@ -1,5 +1,6 @@
 package dev.swe573.whatsthis.service;
 
+import dev.swe573.whatsthis.controller.CommentNotFoundException;
 import dev.swe573.whatsthis.controller.PostNotFoundException;
 import dev.swe573.whatsthis.controller.UserNotFoundException;
 import dev.swe573.whatsthis.dto.PostDto;
@@ -7,11 +8,14 @@ import dev.swe573.whatsthis.dto.TagDto;
 import dev.swe573.whatsthis.model.Post;
 import dev.swe573.whatsthis.model.User;
 import dev.swe573.whatsthis.model.Comment;
+import dev.swe573.whatsthis.repository.CommentRepo;
 import dev.swe573.whatsthis.repository.PostRepo;
 import dev.swe573.whatsthis.repository.UserRepo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -19,11 +23,18 @@ import java.util.stream.Collectors;
 @Service
 public class PostService {
 
+    @Autowired
     private PostRepo postRepo;
+    @Autowired
     private UserService userService;
+    @Autowired
+    private CommentService commentService;
 
     @Autowired
     private UserRepo userRepo;
+
+    @Autowired
+    private CommentRepo commentRepo;
 
     @Autowired
     public PostService(PostRepo postRepo) {
@@ -38,6 +49,7 @@ public class PostService {
         return postRepo.findAll().stream().map(this::toDto).collect(Collectors.toList());
     }
 
+    @Transactional(readOnly = true)
     public PostDto one(Long id) {
         Post post =  postRepo.findById(id).orElseThrow(() -> new PostNotFoundException(id));
         return toDto(post);
@@ -81,6 +93,16 @@ public class PostService {
 
         post.setTags(postDto.getTags());
 
+        if (postDto.getComments() != null) {
+            List<Comment> comments = postDto.getComments().stream()
+                    .map(commentId -> commentRepo.findById(commentId.getId())
+                            .orElseThrow(() -> new CommentNotFoundException(commentId.getId())))
+                    .collect(Collectors.toList());
+            post.setComments(comments);
+        } else {
+            post.setComments(new ArrayList<>());
+        }
+
         return post;
     }
 
@@ -113,7 +135,12 @@ public class PostService {
         postDto.setHandmade(post.getHandmade());
         postDto.setFunctionality(post.getFunctionality());
 
-        //postDto.setComments(post.getComments().stream().map(Comment::getId).collect(Collectors.toList()));
+        if (post.getComments() != null) {
+            postDto.setComments(post.getComments().stream()
+                    .map(commentService::toDto).collect(Collectors.toList()));
+        } else {
+            postDto.setComments(new ArrayList<>());
+        }
 
         postDto.setTags(post.getTags());
 

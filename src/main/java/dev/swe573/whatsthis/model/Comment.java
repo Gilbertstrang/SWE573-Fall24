@@ -7,6 +7,7 @@ import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 
 @Entity
+@Table(name="comments")
 @Data
 public class Comment {
     @Id
@@ -27,4 +28,6 @@ public class Comment {
     @Lob
     @Column(columnDefinition = "text")
     String text;
+
+    private int votes = 0;
 }
