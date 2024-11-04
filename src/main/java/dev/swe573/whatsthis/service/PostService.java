@@ -55,6 +55,7 @@ public class PostService {
         return toDto(post);
     }
 
+    @Transactional
     public PostDto newPost(PostDto postDto) {
         Post post = toEntity(postDto);
 
