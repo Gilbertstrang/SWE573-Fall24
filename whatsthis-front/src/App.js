@@ -10,7 +10,7 @@ function App() {
             <Routes>
                 <Route path="/" element={<HomePage />} />
                 <Route path="/create-post" element={<PostCreatePage />} />
-                <Route path="/posts/:postId" element={<PostDetailPage />} /> {/* Route for viewing post details */}
+                <Route path="/posts/:postId" element={<PostDetailPage />} /> 
                 <Route path="*" element={<div>Page Not Found</div>} />
             </Routes>
         </Router>

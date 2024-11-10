@@ -15,12 +15,12 @@ public class Comment {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name="postId", nullable = false)
+    @JoinColumn(name="post_id", nullable = false)
     @JsonIgnore
     Post post;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name="userId", nullable = false)
+    @JoinColumn(name="user_id", nullable = false)
     @OnDelete(action = OnDeleteAction.NO_ACTION)
     @JsonIgnore
     User user;
