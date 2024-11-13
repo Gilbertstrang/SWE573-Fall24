@@ -61,7 +61,7 @@ public class UserService {
         user.setUsername(userDto.getUsername());
         user.setEmail(userDto.getEmail());
         user.setPassword(userDto.getPassword());// DANGEROUS TO PUT PASSWORD LIKE THIS MY MAN
-                                                // WE GOING TO SECURE IT LATER :(
+        // WE GOING TO SECURE IT LATER :(
 
         User updatedUser = userRepo.save(user);
         return toDto(updatedUser);
