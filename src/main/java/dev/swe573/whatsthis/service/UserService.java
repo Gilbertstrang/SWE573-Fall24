@@ -9,22 +9,29 @@ import dev.swe573.whatsthis.model.Comment;
 import dev.swe573.whatsthis.repository.UserRepo;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
-public class UserService {
+public class UserService implements UserDetailsService{
 
     private final UserRepo userRepo;
+    private final PasswordEncoder passwordEncoder;
 
     @Autowired
-    public UserService(UserRepo userRepo) {
+    public UserService(UserRepo userRepo, PasswordEncoder passwordEncoder) {
         this.userRepo = userRepo;
+        this.passwordEncoder = passwordEncoder;
     }
 
     public List<UserDto> all() {
@@ -39,7 +46,14 @@ public class UserService {
         return toDto(user);
     }
 
-    public UserDto newUser(UserDto userDto, PasswordEncoder passwordEncoder) {
+    public UserDto newUser(UserDto userDto) {
+        if (userRepo.findByUsername(userDto.getUsername()).isPresent()) {
+            throw new IllegalArgumentException("Username already taken");
+        }
+        if (userRepo.findByEmail(userDto.getEmail()).isPresent()) {
+            throw new IllegalArgumentException("Email already in use");
+        }
+
         User user = toEntity(userDto);
 
         // encrypt the password before saving
@@ -92,9 +106,16 @@ public class UserService {
     }
 
     //we need to add this error to user exception class
-    public User loadUserByUsername(String username) {
-        return userRepo.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("User not found with username: " + username));
+    @Override
+    public UserDetails loadUserByUsername(String username) {
+        User user = userRepo.findByUsername(username)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found: " + username));
+
+        return new org.springframework.security.core.userdetails.User(
+                user.getUsername(),
+                user.getPassword(),
+                user.getRoles().stream().map(SimpleGrantedAuthority::new).collect(Collectors.toList())
+        );
     }
 
     public boolean existsByUsername(String username) {
@@ -103,5 +124,9 @@ public class UserService {
 
     public boolean existsByEmail(String email) {
         return userRepo.findByEmail(email).isPresent();
+    }
+
+    public Optional<User> findByUsername(String username) {
+        return userRepo.findByUsername(username);
     }
 }

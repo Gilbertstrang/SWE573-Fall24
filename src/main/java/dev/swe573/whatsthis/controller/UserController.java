@@ -7,6 +7,7 @@ import dev.swe573.whatsthis.utils.JwtUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.hateoas.CollectionModel;
 import org.springframework.hateoas.EntityModel;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -15,6 +16,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
@@ -25,19 +27,14 @@ import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 public class UserController {
     private final UserService userService;
 
-    @Autowired
-    private PasswordEncoder passwordEncoder;
+    private final JwtUtil jwtUtil;
+    private final AuthenticationManager authenticationManager;
 
     @Autowired
-    private AuthenticationManager authenticationManager;
-
-    @Autowired
-    private JwtUtil jwtUtil;
-
-    @Autowired
-    UserController(UserService userService) {
+    public UserController(UserService userService, JwtUtil jwtUtil, AuthenticationManager authenticationManager) {
         this.userService = userService;
-
+        this.jwtUtil = jwtUtil;
+        this.authenticationManager = authenticationManager;
     }
 
     @GetMapping()
@@ -54,35 +51,31 @@ public class UserController {
     }
 
     @PostMapping("/signup")
-    public EntityModel<UserDto> newUser(@RequestBody UserDto userDto) {
-        UserDto createdUser = userService.newUser(userDto, passwordEncoder);
-
-
-        EntityModel<UserDto> userModel = EntityModel.of(createdUser);
-        userModel.add(linkTo(methodOn(UserController.class).one(createdUser.getId())).withSelfRel());
-        userModel.add(linkTo(methodOn(UserController.class).all()).withRel("users"));
-
-        return userModel;
-
+    public ResponseEntity<String> signup(@RequestBody UserDto userDto) {
+        try {
+            UserDto savedUser = userService.newUser(userDto);
+            return ResponseEntity.ok("User registered successfully");
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
     }
 
     @PostMapping("/login")
-    public String loginUser(@RequestBody LoginRequest loginRequest) {
+    public ResponseEntity<?> login(@RequestBody UserDto loginRequest) {
         try {
-            // Authenticate user
             authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(
                             loginRequest.getUsername(),
                             loginRequest.getPassword()
                     )
             );
+            var user = userService.findByUsername(loginRequest.getUsername())
+                    .orElseThrow(() -> new RuntimeException("Invalid username or password"));
 
-            // Generate JWT token if authentication is successful
-            String token = jwtUtil.generateToken(loginRequest.getUsername());
-            return "Bearer " + token;
-
+            String token = jwtUtil.generateToken(user.getId());
+            return ResponseEntity.ok(Map.of("token", token));
         } catch (AuthenticationException e) {
-            throw new RuntimeException("Invalid username or password");
+            return ResponseEntity.status(401).body(Map.of("error", "Invalid username or password"));
         }
     }
 
