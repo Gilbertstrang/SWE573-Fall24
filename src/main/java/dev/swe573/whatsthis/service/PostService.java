@@ -14,10 +14,9 @@ import dev.swe573.whatsthis.repository.UserRepo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -58,8 +57,7 @@ public class PostService {
     @Transactional
     public PostDto newPost(PostDto postDto) {
         Post post = toEntity(postDto);
-
-        post  = postRepo.save(post);
+        post = postRepo.save(post);
         return toDto(post);
     }
 
@@ -68,12 +66,14 @@ public class PostService {
         post.setTitle(postDto.getTitle());
         post.setDescription(postDto.getDescription());
         post.setVotes(postDto.getVotes());
-        post.setImageUrls(postDto.getImageUrls());
+        post.setImageUrls(postDto.getImageUrls() != null ? postDto.getImageUrls() : new ArrayList<>());
 
-        User user = userRepo.findById(postDto.getUserId())
-                .orElseThrow(() -> new UserNotFoundException(postDto.getUserId()));
-        post.setUser(user);
+        if (postDto.getUserId() == null) {
+            throw new IllegalArgumentException("User ID must not be null.");
+        }
+        post.setUserId(postDto.getUserId());
 
+        // Set other optional fields
         post.setMaterial(postDto.getMaterial());
         post.setSize(postDto.getSize());
         post.setColor(postDto.getColor());
@@ -92,17 +92,11 @@ public class PostService {
         post.setHandmade(postDto.getHandmade());
         post.setFunctionality(postDto.getFunctionality());
 
-        post.setTags(postDto.getTags());
 
-        if (postDto.getComments() != null) {
-            List<Comment> comments = postDto.getComments().stream()
-                    .map(commentId -> commentRepo.findById(commentId.getId())
-                            .orElseThrow(() -> new CommentNotFoundException(commentId.getId())))
-                    .collect(Collectors.toList());
-            post.setComments(comments);
-        } else {
-            post.setComments(new ArrayList<>());
-        }
+        post.setTags(postDto.getTags() != null ? postDto.getTags() : new ArrayList<>());
+
+
+        post.setComments(new ArrayList<>());
 
         return post;
     }
@@ -110,13 +104,13 @@ public class PostService {
     private PostDto toDto(Post post) {
         PostDto postDto = new PostDto();
 
-        postDto.setId(post.getId());
+
         postDto.setTitle(post.getTitle());
         postDto.setDescription(post.getDescription());
         postDto.setVotes(post.getVotes());
-        postDto.setUserId(post.getUser().getId());
+        postDto.setUserId(post.getUserId());
 
-        postDto.setImageUrls(post.getImageUrls());
+        postDto.setImageUrls(post.getImageUrls() != null ? post.getImageUrls() : Collections.emptyList());
 
         postDto.setMaterial(post.getMaterial());
         postDto.setSize(post.getSize());
@@ -136,14 +130,9 @@ public class PostService {
         postDto.setHandmade(post.getHandmade());
         postDto.setFunctionality(post.getFunctionality());
 
-        if (post.getComments() != null) {
-            postDto.setComments(post.getComments().stream()
-                    .map(commentService::toDto).collect(Collectors.toList()));
-        } else {
-            postDto.setComments(new ArrayList<>());
-        }
+        postDto.setComments(new ArrayList<>());
 
-        postDto.setTags(post.getTags());
+        postDto.setTags(post.getTags() != null ? post.getTags() : new ArrayList<>());
 
         return postDto;
     }

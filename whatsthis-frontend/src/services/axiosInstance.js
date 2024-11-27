@@ -1,15 +1,18 @@
+// src/services/axiosInstance.js
 import axios from 'axios';
 
+// Create an axios instance
 const axiosInstance = axios.create({
   baseURL: 'http://localhost:8080/api',
 });
 
-// Adding an interceptor to include the Authorization header with the JWT token
+// Add a request interceptor to attach the Authorization header
 axiosInstance.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('jwt');
+    // Get the token from localStorage
+    const token = localStorage.getItem('token');
     if (token) {
-      config.headers['Authorization'] = `Bearer ${token}`;
+      config.headers.Authorization = `Bearer ${token}`;
     }
     return config;
   },

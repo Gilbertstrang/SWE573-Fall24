@@ -1,11 +1,10 @@
 "use client";
-
 import { useUser } from '../context/UserContext';
 import { useState } from 'react';
 import Link from 'next/link';
 
 function NavigationBar({ onOpenLogin, onOpenSignup, onSearch }) {
-  const { user, logout } = useUser();
+  const { user, logout } = useUser();  // useUser should now return a valid context
   const [searchQuery, setSearchQuery] = useState("");
 
   const handleSearchInputChange = (e) => {
@@ -28,7 +27,6 @@ function NavigationBar({ onOpenLogin, onOpenSignup, onSearch }) {
             </span>
           </Link>
 
-          {/* Search bar moved into the navigation bar */}
           <form onSubmit={handleSearchSubmit} className="flex items-center">
             <input
               type="text"
@@ -46,14 +44,14 @@ function NavigationBar({ onOpenLogin, onOpenSignup, onSearch }) {
           </form>
         </div>
 
-        {/* Authentication Links */}
-        <div className="flex items-center space-x-4">
+       {/* Authentication Links */}
+       <div className="flex items-center space-x-4">
           {user ? (
             <>
               {/* User Profile Tab */}
-              <Link href="/profile">
+              <Link href={`/profile/${user.id}`}>
                 <span className="text-white cursor-pointer">
-                  {user.username}
+                {user.username || "Profile"}
                 </span>
               </Link>
               <button

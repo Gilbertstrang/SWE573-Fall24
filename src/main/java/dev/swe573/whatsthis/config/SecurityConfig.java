@@ -3,6 +3,7 @@ package dev.swe573.whatsthis.config;
 import dev.swe573.whatsthis.utils.JwtRequestFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
@@ -37,7 +38,9 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))  // Set up CORS with custom configuration
                 .csrf(csrf -> csrf.disable())  // Disable CSRF since we're using JWT (stateless)
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/**").permitAll()  // Allow all `/api/**` endpoints without authentication
+                        .requestMatchers("/api/users/**", "/api/posts", "/api/posts/**", "/api/**").permitAll() // Allow login, signup, and viewing posts
+                        .requestMatchers(HttpMethod.GET, "/api/posts/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/posts/**").permitAll()
                         .anyRequest().authenticated()  // All other endpoints require authentication
                 )
                 .sessionManagement(session -> session

@@ -15,6 +15,7 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -51,12 +52,17 @@ public class UserController {
     }
 
     @PostMapping("/signup")
-    public ResponseEntity<String> signup(@RequestBody UserDto userDto) {
+    public ResponseEntity<Map<String, String>> signup(@RequestBody UserDto userDto) {
         try {
             UserDto savedUser = userService.newUser(userDto);
-            return ResponseEntity.ok("User registered successfully");
+            Map<String, String> response = new HashMap<>();
+            response.put("message", "User registered successfully");
+            response.put("userId", savedUser.getId().toString());
+            return ResponseEntity.ok(response);
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
+            Map<String, String> errorResponse = new HashMap<>();
+            errorResponse.put("error", e.getMessage());
+            return ResponseEntity.badRequest().body(errorResponse);
         }
     }
 

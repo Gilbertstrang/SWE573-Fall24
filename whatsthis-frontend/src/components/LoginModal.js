@@ -21,7 +21,17 @@ const LoginModal = ({ onClose }) => {
       }
 
       const data = await response.json();
-      login(data);
+      const { token } = data;
+
+      // Assume backend returns user info as well (e.g., id, username)
+      const userData = {
+        id: data.id,
+        username: data.username,
+        email: data.email,
+      };
+
+      // Set the logged-in state in context
+      login(userData, token);
       onClose();
     } catch (error) {
       console.error('Login error:', error);

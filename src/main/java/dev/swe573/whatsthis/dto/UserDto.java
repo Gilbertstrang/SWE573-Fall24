@@ -13,7 +13,7 @@ public class UserDto {
     private String email;
     private String password; //This is going to change. It is here for testing.
     private Set<String> roles;
-    private List<Long> postIds;
+    //private List<Long> postIds;
     private List<Long> commentIds;
 
 }

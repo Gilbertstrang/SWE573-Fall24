@@ -1,25 +1,49 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { useUser } from '../../context/UserContext';
+import { useRouter } from 'next/navigation';
 import axiosInstance from '../../services/axiosInstance';
 
 export default function CreatePostPage() {
+  const { user } = useUser();
+  const router = useRouter();
+
   const [formData, setFormData] = useState({
     title: '',
     description: '',
     material: '',
     size: '',
+    textAndLanguage: '',
     color: '',
     shape: '',
     weight: '',
+    descriptionOfParts: '',
     location: '',
     timePeriod: '',
+    smell: '',
+    taste: '',
+    texture: '',
+    hardness: '',
+    pattern: '',
+    brand: '',
+    print: '',
+    icons: '',
     handmade: false,
+    functionality: '',
     tags: [],
-    images: []  // New state to store images
+    images: []
   });
 
   const [imagePreviews, setImagePreviews] = useState([]);
+  const [availableTags, setAvailableTags] = useState([]);
+  const [suggestedTags, setSuggestedTags] = useState([]);
+
+  useEffect(() => {
+    if (!user) {
+      router.push('/login'); // Redirect to login if not logged in
+    }
+  }, [user]);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -36,10 +60,44 @@ export default function CreatePostPage() {
       images: files,
     }));
 
-    // Create preview URLs for each selected file
     const previews = files.map((file) => URL.createObjectURL(file));
     setImagePreviews(previews);
   };
+
+  const handleTagInputChange = (e) => {
+    const value = e.target.value;
+    setSuggestedTags(
+      availableTags.filter((tag) => tag.toLowerCase().includes(value.toLowerCase()))
+    );
+  };
+
+  const handleTagSelect = (tag) => {
+    setFormData((prevFormData) => ({
+      ...prevFormData,
+      tags: [...prevFormData.tags, tag],
+    }));
+    setSuggestedTags([]);
+  };
+
+  const handleRemoveTag = (tag) => {
+    setFormData((prevFormData) => ({
+      ...prevFormData,
+      tags: prevFormData.tags.filter((t) => t !== tag),
+    }));
+  };
+
+  const fetchAvailableTags = async () => {
+    try {
+      const response = await axiosInstance.get('/posts/tags?query=');
+      setAvailableTags(response.data);
+    } catch (error) {
+      console.error('Error fetching tags:', error);
+    }
+  };
+
+  useEffect(() => {
+    fetchAvailableTags();
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -47,10 +105,13 @@ export default function CreatePostPage() {
 
     // Append each form field to the FormData object
     for (let key in formData) {
-      if (key !== 'images') {
+      if (key !== 'images' && key !== 'tags') {
         postData.append(key, formData[key]);
       }
     }
+
+    // Append tags as JSON
+    postData.append('tags', JSON.stringify(formData.tags));
 
     // Append each image to the FormData object
     formData.images.forEach((image) => {
@@ -64,6 +125,8 @@ export default function CreatePostPage() {
         }
       });
       console.log("Post created successfully:", response.data);
+      // Redirect after successful post creation
+      router.push('/');
     } catch (error) {
       console.error("Error creating post:", error);
     }
@@ -101,6 +164,8 @@ export default function CreatePostPage() {
                   required
                 />
               </div>
+              {/* Additional Fields */}
+              {/* Material */}
               <div className="mb-4">
                 <label className="block mb-2" htmlFor="material">Material:</label>
                 <input
@@ -112,6 +177,7 @@ export default function CreatePostPage() {
                   className="w-full p-2 rounded-lg bg-gray-700 text-white"
                 />
               </div>
+              {/* Size */}
               <div className="mb-4">
                 <label className="block mb-2" htmlFor="size">Size:</label>
                 <input
@@ -127,51 +193,6 @@ export default function CreatePostPage() {
 
             {/* Right Column */}
             <div>
-              <div className="mb-4">
-                <label className="block mb-2" htmlFor="weight">Weight:</label>
-                <input
-                  type="text"
-                  name="weight"
-                  id="weight"
-                  value={formData.weight}
-                  onChange={handleChange}
-                  className="w-full p-2 rounded-lg bg-gray-700 text-white"
-                />
-              </div>
-              <div className="mb-4">
-                <label className="block mb-2" htmlFor="location">Location:</label>
-                <input
-                  type="text"
-                  name="location"
-                  id="location"
-                  value={formData.location}
-                  onChange={handleChange}
-                  className="w-full p-2 rounded-lg bg-gray-700 text-white"
-                />
-              </div>
-              <div className="mb-4">
-                <label className="block mb-2" htmlFor="timePeriod">Time Period:</label>
-                <input
-                  type="text"
-                  name="timePeriod"
-                  id="timePeriod"
-                  value={formData.timePeriod}
-                  onChange={handleChange}
-                  className="w-full p-2 rounded-lg bg-gray-700 text-white"
-                />
-              </div>
-              <div className="mb-4">
-                <label className="block mb-2" htmlFor="handmade">Handmade:</label>
-                <input
-                  type="checkbox"
-                  name="handmade"
-                  id="handmade"
-                  checked={formData.handmade}
-                  onChange={handleChange}
-                  className="ml-2"
-                />
-              </div>
-
               {/* File Input for Images */}
               <div className="mb-4">
                 <label className="block mb-2" htmlFor="images">Upload Images:</label>
@@ -184,7 +205,6 @@ export default function CreatePostPage() {
                   className="w-full p-2 rounded-lg bg-gray-700 text-white"
                 />
               </div>
-
               {/* Preview Uploaded Images */}
               {imagePreviews.length > 0 && (
                 <div className="mb-4">
@@ -201,6 +221,44 @@ export default function CreatePostPage() {
                   </div>
                 </div>
               )}
+
+              {/* Tags Section */}
+              <div className="mb-4">
+                <label className="block mb-2">Tags:</label>
+                <input
+                  type="text"
+                  placeholder="Type to search tags..."
+                  onChange={handleTagInputChange}
+                  className="w-full p-2 rounded-lg bg-gray-700 text-white"
+                />
+                {suggestedTags.length > 0 && (
+                  <div className="bg-gray-700 p-2 rounded-lg mt-2">
+                    {suggestedTags.map((tag, index) => (
+                      <div
+                        key={index}
+                        className="cursor-pointer p-2 hover:bg-gray-600 rounded"
+                        onClick={() => handleTagSelect(tag)}
+                      >
+                        {tag}
+                      </div>
+                    ))}
+                  </div>
+                )}
+                <div className="flex flex-wrap mt-4">
+                  {formData.tags.map((tag, index) => (
+                    <div key={index} className="bg-teal-500 text-white p-2 rounded-lg mr-2 mb-2 flex items-center">
+                      {tag}
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveTag(tag)}
+                        className="ml-2 text-sm text-red-500"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
           </div>
 

@@ -7,10 +7,15 @@ import dev.swe573.whatsthis.service.CommentService;
 import dev.swe573.whatsthis.service.PostService;
 import dev.swe573.whatsthis.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.hateoas.CollectionModel;
 import org.springframework.hateoas.EntityModel;
+import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -58,15 +63,11 @@ public class PostController {
 
     //Create new post
     @PostMapping
-    public EntityModel<PostDto> newPost (@RequestBody PostDto postDto) {
+    public EntityModel<PostDto> newPost(@RequestBody PostDto postDto) {
         PostDto createdPost = postService.newPost(postDto);
-
-        EntityModel<PostDto> postModel = EntityModel.of(createdPost,
+        return EntityModel.of(createdPost,
                 linkTo(methodOn(PostController.class).one(createdPost.getId())).withSelfRel(),
                 linkTo(methodOn(PostController.class).all()).withRel("all-posts"));
-
-        return postModel;
-
     }
 
     //Update existing post

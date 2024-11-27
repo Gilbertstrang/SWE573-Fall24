@@ -18,11 +18,16 @@ const SignupModal = ({ onClose }) => {
       });
 
       if (!response.ok) {
-        throw new Error('Signup failed');
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Signup failed');
       }
 
-      const data = await response.json();
-      login(data);
+      const data = await response.json(); // Expecting a JSON response from backend now
+      console.log(data.message); // Log the success message if necessary
+
+      // Optionally, call login after successful signup
+      // login(data); // This assumes the backend provides login info after signup, otherwise handle accordingly.
+
       onClose();
     } catch (error) {
       console.error('Signup error:', error);

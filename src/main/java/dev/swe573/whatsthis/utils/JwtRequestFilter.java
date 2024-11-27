@@ -36,6 +36,17 @@ public class JwtRequestFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(jakarta.servlet.http.HttpServletRequest request, jakarta.servlet.http.HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
+
+        String requestUri = request.getRequestURI();
+
+        // Skip JWT validation for public endpoints
+        if (requestUri.startsWith("/api/users/signup") ||
+                requestUri.startsWith("/api/users/login") ||
+                requestUri.startsWith("/api/posts") ||
+                requestUri.startsWith("/api/users")) {
+            filterChain.doFilter(request, response);
+            return;
+        }
         try {
             String authorizationHeader = request.getHeader("Authorization");
 
