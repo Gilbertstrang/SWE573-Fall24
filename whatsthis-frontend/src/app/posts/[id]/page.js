@@ -83,7 +83,7 @@ export default function DetailedPostPage() {
               {post.imageUrls.map((url, index) => (
                 <img
                   key={index}
-                  src={url}
+                  src={`http://localhost:8080/${post.imageUrls[0].split('/').pop()}`}
                   alt={`Post Image ${index + 1}`}
                   className="w-full h-auto rounded-lg"
                 />

@@ -32,7 +32,7 @@ public class FileUploadController {
         for (MultipartFile image : images) {
             try {
                 String savedFileName = saveImage(image);
-                String fileUrl = "/uploads/" + savedFileName; // Adjust to your URL structure
+                String fileUrl = "/uploads/" + savedFileName;
                 savedUrls.add(fileUrl);
             } catch (IOException e) {
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Collections.emptyList());
@@ -44,8 +44,8 @@ public class FileUploadController {
 
     private String saveImage(MultipartFile file) throws IOException {
         String fileName = UUID.randomUUID() + "_" + file.getOriginalFilename();
-        Path uploadPath = Paths.get(uploadsDir, "posts/");
-        Files.createDirectories(uploadPath); // Create the directory if it doesn't exist
+        Path uploadPath = Paths.get(uploadsDir);
+        Files.createDirectories(uploadPath); // create the directory if it doesn't exist
 
         Path destinationFile = uploadPath.resolve(fileName);
         Files.copy(file.getInputStream(), destinationFile, StandardCopyOption.REPLACE_EXISTING);

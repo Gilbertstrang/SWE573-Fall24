@@ -1,20 +1,31 @@
-"use client";
-
+import React from "react";
 import Link from "next/link";
 
 const PostCard = ({ post }) => {
   return (
-    <div className="bg-gray-800 p-6 rounded-lg transition-transform transform hover:scale-105">
-      <h2 className="text-teal-400 text-xl mb-4">
-        <Link href={`/posts/${post.id}`}>{post.title}</Link>
-      </h2>
-      <p className="text-sm text-teal-300 mb-3">Posted by: {post.username}</p>
-      <p className="text-white mb-4">
-        {post.description.substring(0, 100)}...
-      </p>
-      <div className="flex justify-between text-gray-400">
-        <span>Votes: {post.votes}</span>
-        <span>Comments: {post.comments.length}</span>
+    <div className="bg-gray-800 text-white rounded-lg shadow-lg overflow-hidden">
+      <div>
+        {post.imageUrls && post.imageUrls.length > 0 ? (
+          <img
+            src={`http://localhost:8080/${post.imageUrls[0].split('/').pop()}`}
+            alt={post.title}
+            className="w-full h-48 object-cover"
+          />
+        ) : (
+          <div className="bg-gray-700 w-full h-48 flex items-center justify-center text-gray-500">
+            No Image
+          </div>
+        )}
+      </div>
+      <div className="p-4">
+        <h2 className="text-xl font-semibold truncate">{post.title}</h2>
+        <p className="text-gray-400 text-sm mt-2 truncate">{post.description}</p>
+        <div className="mt-4 flex justify-between items-center">
+          <span className="text-teal-400 font-bold">{post.votes} Votes</span>
+          <Link href={`/posts/${post.id}`}>
+            <button className="text-teal-500 hover:text-teal-300">View Details</button>
+          </Link>
+        </div>
       </div>
     </div>
   );

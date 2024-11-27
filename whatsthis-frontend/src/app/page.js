@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from 'next/link'; // Import the Link component
+import Link from 'next/link';
 import postService from "../services/postService";
 import PostCard from "../components/PostCard";
 
@@ -26,7 +26,6 @@ export default function HomePage() {
   return (
     <div className="bg-gray-900 text-white min-h-screen p-8">
       <div className="container mx-auto">
-
         <div className="text-center mb-12">
           <Link href="create-post">
             <button className="bg-teal-500 text-white px-10 py-5 text-2xl font-semibold rounded-lg hover:bg-teal-600 transition shadow-lg">
@@ -46,7 +45,7 @@ export default function HomePage() {
             ))}
           </div>
         )}
-        
+
         {!loading && posts.length === 0 && (
           <div className="text-center mt-10">
             <h3 className="text-gray-500 text-lg">No posts found.</h3>

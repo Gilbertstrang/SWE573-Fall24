@@ -104,13 +104,17 @@ public class PostService {
     private PostDto toDto(Post post) {
         PostDto postDto = new PostDto();
 
-
+        postDto.setId(post.getId());
         postDto.setTitle(post.getTitle());
         postDto.setDescription(post.getDescription());
         postDto.setVotes(post.getVotes());
         postDto.setUserId(post.getUserId());
 
-        postDto.setImageUrls(post.getImageUrls() != null ? post.getImageUrls() : Collections.emptyList());
+        postDto.setImageUrls(
+                post.getImageUrls().stream()
+                        .map(fileName -> "/uploads/posts/" + fileName)
+                        .collect(Collectors.toList())
+        );
 
         postDto.setMaterial(post.getMaterial());
         postDto.setSize(post.getSize());
