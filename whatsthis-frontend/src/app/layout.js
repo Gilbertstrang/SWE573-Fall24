@@ -5,7 +5,7 @@ import { UserProvider } from '../context/UserContext';
 import { useState } from "react";
 import NavigationBar from '../components/NavigationBar';
 import LoginModal from "../components/LoginModal";
-import SignupModal from "../components/SignupModal"; // Assume SignupModal is similar to LoginModal
+import SignupModal from "../components/SignupModal"; 
 
 export default function Layout({ children }) {
   const [isLoginOpen, setLoginOpen] = useState(false);

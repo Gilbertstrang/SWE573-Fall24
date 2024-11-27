@@ -79,7 +79,10 @@ public class UserController {
                     .orElseThrow(() -> new RuntimeException("Invalid username or password"));
 
             String token = jwtUtil.generateToken(user.getId());
-            return ResponseEntity.ok(Map.of("token", token));
+            return ResponseEntity.ok(Map.of("token", token,
+                    "id", user.getId(),
+                    "username", user.getUsername(),
+                    "email", user.getEmail()));
         } catch (AuthenticationException e) {
             return ResponseEntity.status(401).body(Map.of("error", "Invalid username or password"));
         }

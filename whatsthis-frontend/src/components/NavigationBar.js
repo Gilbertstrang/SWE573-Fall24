@@ -4,7 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 
 function NavigationBar({ onOpenLogin, onOpenSignup, onSearch }) {
-  const { user, logout } = useUser();  // useUser should now return a valid context
+  const { user, logout } = useUser();  
   const [searchQuery, setSearchQuery] = useState("");
 
   const handleSearchInputChange = (e) => {
@@ -15,7 +15,7 @@ function NavigationBar({ onOpenLogin, onOpenSignup, onSearch }) {
     e.preventDefault();
     onSearch(searchQuery);
   };
-
+  console.log("Current User:", user);
   return (
     <nav className="bg-gray-800 p-4">
       <div className="container mx-auto flex justify-between items-center">
@@ -51,7 +51,7 @@ function NavigationBar({ onOpenLogin, onOpenSignup, onSearch }) {
               {/* User Profile Tab */}
               <Link href={`/profile/${user.id}`}>
                 <span className="text-white cursor-pointer">
-                {user.username || "Profile"}
+                {user.username}
                 </span>
               </Link>
               <button
