@@ -118,7 +118,7 @@ export default function DetailedPostPage() {
   }
 
   const renderAttributes = () => {
-    const excludedKeys = ["id", "userId", "title", "description", "imageUrls", "tags", "votes"];
+    const excludedKeys = ["id", "userId", "title", "description", "imageUrls", "tags", "votes", "comments", "_links"];
     return Object.keys(post)
       .filter((key) => !excludedKeys.includes(key) && post[key])
       .map((key) => (
@@ -147,7 +147,7 @@ export default function DetailedPostPage() {
 
         {/* Main Content */}
         <div className="flex flex-wrap lg:flex-nowrap gap-8">
-          {/* Left Column: Description and Images */}
+          
           <div className="w-full lg:w-2/3">
             <p className="mb-6 text-gray-300">{post.description}</p>
             {post.imageUrls && post.imageUrls.length > 0 && (
@@ -168,7 +168,7 @@ export default function DetailedPostPage() {
             )}
           </div>
 
-          {/* Right Column: Attributes Table */}
+          
           <div className="w-full lg:w-1/3">
             <h3 className="text-2xl font-bold mb-4">Details</h3>
             <table className="w-full text-left border-collapse border border-gray-700">
@@ -190,7 +190,7 @@ export default function DetailedPostPage() {
           </div>
         </div>
 
-        {/* Bottom Section: Votes and Comments */}
+        
         <div className="mt-8">
           <div className="flex items-center justify-between">
             {/* Votes */}
