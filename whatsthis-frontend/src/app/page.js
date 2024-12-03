@@ -1,13 +1,15 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from 'next/link';
+import Link from "next/link";
 import postService from "../services/postService";
 import PostCard from "../components/PostCard";
+import { useUser } from "../context/UserContext"; // Import the user context
 
 export default function HomePage() {
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const { user } = useUser(); // Get the logged-in user
 
   useEffect(() => {
     const fetchPosts = async () => {
@@ -27,11 +29,13 @@ export default function HomePage() {
     <div className="bg-gray-900 text-white min-h-screen p-8">
       <div className="container mx-auto">
         <div className="text-center mb-12">
-          <Link href="create-post">
-            <button className="bg-teal-500 text-white px-10 py-5 text-2xl font-semibold rounded-lg hover:bg-teal-600 transition shadow-lg">
-              New Mystery
-            </button>
-          </Link>
+          {user && ( // Only show the button if the user is logged in
+            <Link href="create-post">
+              <button className="bg-teal-500 text-white px-10 py-5 text-2xl font-semibold rounded-lg hover:bg-teal-600 transition shadow-lg">
+                New Mystery
+              </button>
+            </Link>
+          )}
         </div>
 
         {loading ? (

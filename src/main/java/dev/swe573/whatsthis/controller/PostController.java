@@ -108,4 +108,17 @@ public class PostController {
     public void downvotePost(@PathVariable Long id) {
         postService.downvotePost(id);
     }
+
+    @GetMapping("/user/{userId}")
+    public CollectionModel<EntityModel<PostDto>> getPostsByUserId(@PathVariable Long userId) {
+        List<PostDto> userPosts = postService.getPostsByUserId(userId);
+        List<EntityModel<PostDto>> postModels = userPosts.stream()
+                .map(postDto -> EntityModel.of(postDto,
+                        linkTo(methodOn(PostController.class).one(postDto.getId())).withSelfRel(),
+                        linkTo(methodOn(PostController.class).all()).withRel("all-posts")))
+                .collect(Collectors.toList());
+
+        return CollectionModel.of(postModels,
+                linkTo(methodOn(PostController.class).getPostsByUserId(userId)).withSelfRel());
+    }
 }

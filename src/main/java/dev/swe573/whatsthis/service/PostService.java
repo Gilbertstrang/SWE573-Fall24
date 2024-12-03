@@ -189,4 +189,10 @@ public class PostService {
             postRepo.save(post);
         });
     }
+
+    public List<PostDto> getPostsByUserId(Long userId) {
+        return postRepo.findByUserId(userId).stream()
+                .map(this::toDto)
+                .collect(Collectors.toList());
+    }
 }

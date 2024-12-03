@@ -18,6 +18,7 @@ export default function DetailedPostPage() {
   const [newComment, setNewComment] = useState("");
   const [error, setError] = useState("");
   const [comments, setComments] = useState([]);
+  const [userVote, setUserVote] = useState(null);
   const [fullscreenImage, setFullscreenImage] = useState(null);
 
   useEffect(() => {
@@ -36,6 +37,11 @@ export default function DetailedPostPage() {
 
         const fetchedComments = await commentService.getCommentsByPostId(id);
         setComments(fetchedComments);
+
+        if (user) {
+          const userVote = await postService.getUserVote(id, user.id);
+          setUserVote(userVote); 
+        }
       } catch (error) {
         console.error("Error fetching post details:", error);
       } finally {
@@ -44,31 +50,40 @@ export default function DetailedPostPage() {
     };
 
     fetchPostAndComments();
-  }, [id]);
+  }, [id, user]);
 
-  const handleUpvote = async () => {
-    if (user) {
-      try {
-        await postService.upvotePost(post.id);
-        setPost({ ...post, votes: post.votes + 1 });
-      } catch (error) {
-        console.error("Error upvoting post:", error);
-      }
-    } else {
+  const handleVote = async (voteType) => {
+    if (!user) {
       router.push("/login");
+      return;
     }
-  };
 
-  const handleDownvote = async () => {
-    if (user) {
-      try {
-        await postService.downvotePost(post.id);
-        setPost({ ...post, votes: post.votes - 1 });
-      } catch (error) {
-        console.error("Error downvoting post:", error);
+    try {
+      if (userVote === voteType) {
+        
+        await postService.cancelVote(post.id, user.id);
+        setPost({ ...post, votes: post.votes - (voteType === "upvote" ? 1 : -1) });
+        setUserVote(null);
+      } else {
+        
+        if (userVote) {
+          await postService.cancelVote(post.id, user.id);
+          setPost({
+            ...post,
+            votes: post.votes - (userVote === "upvote" ? 1 : -1),
+          });
+        }
+
+        
+        await postService.votePost(post.id, user.id, voteType);
+        setPost({
+          ...post,
+          votes: post.votes + (voteType === "upvote" ? 1 : -1),
+        });
+        setUserVote(voteType);
       }
-    } else {
-      router.push("/login");
+    } catch (error) {
+      console.error(`Error ${voteType}ing post:`, error);
     }
   };
 
@@ -102,11 +117,11 @@ export default function DetailedPostPage() {
   };
 
   const handleImageClick = (imageUrl) => {
-    setFullscreenImage(imageUrl); 
+    setFullscreenImage(imageUrl);
   };
 
   const closeFullscreenImage = () => {
-    setFullscreenImage(null); 
+    setFullscreenImage(null);
   };
 
   if (isLoading) {
@@ -138,7 +153,7 @@ export default function DetailedPostPage() {
         <div className="flex justify-between items-center mb-4">
           <h1 className="text-4xl font-bold">{post.title}</h1>
           <p className="text-gray-400">
-            Posted by:{" "}
+            {" "}
             <Link href={`/profile/${post.userId}`} className="text-teal-400 hover:underline">
               {username || "Unknown"}
             </Link>
@@ -147,7 +162,6 @@ export default function DetailedPostPage() {
 
         {/* Main Content */}
         <div className="flex flex-wrap lg:flex-nowrap gap-8">
-          
           <div className="w-full lg:w-2/3">
             <p className="mb-6 text-gray-300">{post.description}</p>
             {post.imageUrls && post.imageUrls.length > 0 && (
@@ -168,7 +182,6 @@ export default function DetailedPostPage() {
             )}
           </div>
 
-          
           <div className="w-full lg:w-1/3">
             <h3 className="text-2xl font-bold mb-4">Details</h3>
             <table className="w-full text-left border-collapse border border-gray-700">
@@ -190,60 +203,61 @@ export default function DetailedPostPage() {
           </div>
         </div>
 
-        
+        {/* Votes */}
         <div className="mt-8">
-          <div className="flex items-center justify-between">
-            {/* Votes */}
-            <div>
-              <button
-                onClick={handleUpvote}
-                className="bg-teal-500 hover:bg-teal-600 text-white px-4 py-2 rounded-md mr-4"
-              >
-                Upvote
-              </button>
-              <button
-                onClick={handleDownvote}
-                className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-md"
-              >
-                Downvote
-              </button>
-              <span className="ml-4 text-teal-300 font-bold text-xl">{post.votes} votes</span>
-            </div>
+          <div className="flex items-center">
+            <button
+              onClick={() => handleVote("upvote")}
+              className={`px-4 py-2 rounded-md mr-4 ${
+                userVote === "upvote" ? "bg-teal-600" : "bg-teal-500 hover:bg-teal-600"
+              } text-white`}
+            >
+              {userVote === "upvote" ? "Upvoted" : "Upvote"}
+            </button>
+            <button
+              onClick={() => handleVote("downvote")}
+              className={`px-4 py-2 rounded-md ${
+                userVote === "downvote" ? "bg-red-600" : "bg-red-500 hover:bg-red-600"
+              } text-white`}
+            >
+              {userVote === "downvote" ? "Downvoted" : "Downvote"}
+            </button>
+            <span className="ml-4 text-teal-300 font-bold text-xl">{post.votes} votes</span>
           </div>
+        </div>
 
-          {/* Comments */}
-          <div className="mt-8">
-            <h3 className="text-2xl font-bold mb-4">Comments</h3>
-            {comments && comments.length > 0 ? (
-              comments.map((comment, index) => (
-                <div key={index} className="bg-gray-700 p-4 rounded-md mb-4">
-                  <p>
-                    <strong>{comment.username || `User ${comment.userId}`}</strong>: {comment.text}
-                  </p>
-                </div>
-              ))
-            ) : (
-              <p className="text-gray-400">No comments yet. Be the first to comment!</p>
-            )}
-
-            {user && (
-              <div className="mt-6">
-                <textarea
-                  className="w-full p-2 rounded bg-gray-800 text-white mb-4"
-                  rows="4"
-                  value={newComment}
-                  onChange={(e) => setNewComment(e.target.value)}
-                  placeholder="Add your comment..."
-                ></textarea>
-                <button
-                  onClick={handleCommentSubmit}
-                  className="bg-teal-500 hover:bg-teal-600 text-white px-4 py-2 rounded-md"
-                >
-                  Submit Comment
-                </button>
+        {/* Comments */}
+        <div className="mt-8">
+          <h3 className="text-2xl font-bold mb-4">Comments</h3>
+          {comments && comments.length > 0 ? (
+            comments.map((comment, index) => (
+              <div key={index} className="bg-gray-700 p-4 rounded-md mb-4">
+                <p>
+                  <strong>{comment.username || `User ${comment.userId}`}</strong>: {comment.text}
+                </p>
               </div>
-            )}
-          </div>
+            ))
+          ) : (
+            <p className="text-gray-400">No comments yet. Be the first to comment!</p>
+          )}
+
+          {user && (
+            <div className="mt-6">
+              <textarea
+                className="w-full p-2 rounded bg-gray-800 text-white mb-4"
+                rows="4"
+                value={newComment}
+                onChange={(e) => setNewComment(e.target.value)}
+                placeholder="Add your comment..."
+              ></textarea>
+              <button
+                onClick={handleCommentSubmit}
+                className="bg-teal-500 hover:bg-teal-600 text-white px-4 py-2 rounded-md"
+              >
+                Submit Comment
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
