@@ -12,11 +12,13 @@ const CreatePostPage = () => {
     title: "",
     description: "",
     material: "",
-    size: "",
+    sizeValue: "",
+    sizeUnit: "cm",
     textAndLanguage: "",
     color: "",
     shape: "",
-    weight: "",
+    weightValue: "",
+    weightUnit: "kg",
     descriptionOfParts: "",
     location: "",
     timePeriod: "",
@@ -34,6 +36,17 @@ const CreatePostPage = () => {
     imageUrls: [],
   });
 
+  
+  const predefinedShapes = ["Round", "Square", "Rectangle", "Triangle", "Oval", "Hexagon", "Irregular"];
+  const predefinedMaterials = ["Plastic", "Metal", "Wood", "Glass", "Fabric", "Paper"];
+  const predefinedColors = ["Red", "Green", "Blue", "Black", "White", "Yellow", "Purple", "Brown"];
+  const predefinedPatterns = ["Striped", "Polka Dot", "Plaid", "Solid", "Abstract", "Geometric"];
+  const predefinedTimePeriods = ["19th Century", "20th Century", "21st Century", "Ancient"];
+  const predefinedHardness = ["Soft", "Medium", "Hard"];
+  const predefinedFunctions = ["Decorative", "Functional", "Both"];
+  const sizeUnits = ["cm", "in", "mm", "m"];
+  const weightUnits = ["kg", "g", "lb", "oz"];
+
   const [tagsInput, setTagsInput] = useState("");
   const [tagSuggestions, setTagSuggestions] = useState([]);
   const [loadingTags, setLoadingTags] = useState(false);
@@ -41,8 +54,17 @@ const CreatePostPage = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  
-  const fetchTagSuggestions = async (query) => {
+  const handleInputChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: type === "checkbox" ? checked : value,
+    }));
+  };
+
+  const handleTagInputChange = async (e) => {
+    const query = e.target.value;
+    setTagsInput(query);
     if (!query.trim()) {
       setTagSuggestions([]);
       return;
@@ -54,19 +76,13 @@ const CreatePostPage = () => {
       if (!res.ok) {
         throw new Error("Failed to fetch tag suggestions");
       }
-      const tags = await res.json();
-      setTagSuggestions(tags);
-    } catch (err) {
-      console.error("Error fetching tag suggestions:", err);
+      const suggestions = await res.json();
+      setTagSuggestions(suggestions);
+    } catch (error) {
+      console.error("Error fetching tag suggestions:", error);
     } finally {
       setLoadingTags(false);
     }
-  };
-
-  const handleTagsInput = (e) => {
-    const query = e.target.value;
-    setTagsInput(query);
-    fetchTagSuggestions(query);
   };
 
   const addTag = (tag) => {
@@ -112,14 +128,6 @@ const CreatePostPage = () => {
     }
   };
 
-  const handleInputChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: type === "checkbox" ? checked : value,
-    }));
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -130,7 +138,9 @@ const CreatePostPage = () => {
 
     const postData = {
       ...formData,
-      userId: user.id, 
+      size: `${formData.sizeValue} ${formData.sizeUnit}`,
+      weight: `${formData.weightValue} ${formData.weightUnit}`,
+      userId: user.id,
     };
 
     setLoading(true);
@@ -160,19 +170,25 @@ const CreatePostPage = () => {
   };
 
   return (
-    <div className="bg-gray-900 text-white min-h-screen p-8">
-      <div className="container mx-auto max-w-3xl">
-        <h1 className="text-3xl font-bold mb-6">Create a New Mystery Post</h1>
-
+<div className="min-h-screen flex flex-col bg-gray-900 text-white">
+  <div className="container mx-auto py-8">
+    <div className="max-w-full mx-auto bg-gray-800 rounded-lg shadow-lg p-8">
+      {/* Top Section */}
+      <div className="mb-8">
+        <h1 className="text-4xl font-bold text-center mb-4">Create a New Mystery Post</h1>
         {error && (
           <div className="bg-red-600 text-white p-4 rounded mb-4">
             {error}
           </div>
         )}
+      </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div>
-            <label htmlFor="title" className="block font-semibold mb-2">
+      {/* Form Section */}
+      <form onSubmit={handleSubmit} className="space-y-8">
+        {/* Top Section Fields */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-3">
+            <label htmlFor="title" className="block text-lg font-semibold mb-2">
               Title
             </label>
             <input
@@ -181,13 +197,14 @@ const CreatePostPage = () => {
               name="title"
               value={formData.title}
               onChange={handleInputChange}
-              className="w-full p-2 rounded bg-gray-800 text-white"
+              className="w-full px-4 py-3 rounded-lg bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-teal-500"
+              placeholder="Enter title"
               required
             />
           </div>
 
-          <div>
-            <label htmlFor="description" className="block font-semibold mb-2">
+          <div className="lg:col-span-3">
+            <label htmlFor="description" className="block text-lg font-semibold mb-2">
               Description
             </label>
             <textarea
@@ -195,102 +212,230 @@ const CreatePostPage = () => {
               name="description"
               value={formData.description}
               onChange={handleInputChange}
-              className="w-full p-2 rounded bg-gray-800 text-white"
-              rows={4}
-            />
+              className="w-full px-4 py-3 rounded-lg bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-teal-500"
+              rows={3}
+              placeholder="Describe your mystery post"
+            ></textarea>
+          </div>
+        </div>
+
+        {/* Three Column Section */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Column 1 */}
+          <div className="space-y-6">
+            {[
+              { name: "material", options: predefinedMaterials, label: "Material" },
+              { name: "color", options: predefinedColors, label: "Color" },
+              { name: "shape", options: predefinedShapes, label: "Shape" },
+            ].map(({ name, options, label }) => (
+              <div key={name}>
+                <label htmlFor={name} className="block text-lg font-semibold mb-2">
+                  {label}
+                </label>
+                <select
+                  id={name}
+                  name={name}
+                  value={formData[name]}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-3 rounded-lg bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-teal-500"
+                >
+                  <option value="">Select {label.toLowerCase()}</option>
+                  {options.map((option, idx) => (
+                    <option key={idx} value={option}>
+                      {option}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            ))}
+
+            {[
+              "textAndLanguage",
+              "location",
+              "smell",
+            ].map((field) => (
+              <div key={field}>
+                <label htmlFor={field} className="block text-lg font-semibold mb-2 capitalize">
+                  {field.replace(/([A-Z])/g, " $1")}
+                </label>
+                <input
+                  type="text"
+                  id={field}
+                  name={field}
+                  value={formData[field]}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-3 rounded-lg bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-teal-500"
+                  placeholder={`Enter ${field}`}
+                />
+              </div>
+            ))}
           </div>
 
-          
-          {[
-            "material",
-            "size",
-            "textAndLanguage",
-            "color",
-            "shape",
-            "weight",
-            "descriptionOfParts",
-            "location",
-            "timePeriod",
-            "smell",
-            "taste",
-            "texture",
-            "hardness",
-            "pattern",
-            "brand",
-            "print",
-            "icons",
-            "functionality",
-          ].map((field) => (
-            <div key={field}>
-              <label htmlFor={field} className="block font-semibold mb-2 capitalize">
-                {field.replace(/([A-Z])/g, " $1")}
-              </label>
-              <input
-                type="text"
-                id={field}
-                name={field}
-                value={formData[field]}
-                onChange={handleInputChange}
-                className="w-full p-2 rounded bg-gray-800 text-white"
-              />
-            </div>
-          ))}
+          {/* Column 2 */}
+          <div className="space-y-6">
+            {[
+              { name: "pattern", options: predefinedPatterns, label: "Pattern" },
+              { name: "timePeriod", options: predefinedTimePeriods, label: "Time Period" },
+              { name: "hardness", options: predefinedHardness, label: "Hardness" },
+            ].map(({ name, options, label }) => (
+              <div key={name}>
+                <label htmlFor={name} className="block text-lg font-semibold mb-2">
+                  {label}
+                </label>
+                <select
+                  id={name}
+                  name={name}
+                  value={formData[name]}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-3 rounded-lg bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-teal-500"
+                >
+                  <option value="">Select {label.toLowerCase()}</option>
+                  {options.map((option, idx) => (
+                    <option key={idx} value={option}>
+                      {option}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            ))}
 
-          {/* Checkbox for Handmade */}
-          <div>
-            <label htmlFor="handmade" className="flex items-center space-x-2">
-              <input
-                type="checkbox"
-                id="handmade"
-                name="handmade"
-                checked={formData.handmade}
-                onChange={handleInputChange}
-                className="rounded bg-gray-800"
-              />
-              <span>Handmade</span>
-            </label>
+            {[
+              "taste",
+              "texture",
+              "descriptionOfParts",
+            ].map((field) => (
+              <div key={field}>
+                <label htmlFor={field} className="block text-lg font-semibold mb-2 capitalize">
+                  {field.replace(/([A-Z])/g, " $1")}
+                </label>
+                <input
+                  type="text"
+                  id={field}
+                  name={field}
+                  value={formData[field]}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-3 rounded-lg bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-teal-500"
+                  placeholder={`Enter ${field}`}
+                />
+              </div>
+            ))}
+          </div>
+
+          {/* Column 3 */}
+          <div className="space-y-6">
+            {[
+              "brand",
+              "print",
+              "icons",
+              "functionality",
+            ].map((field) => (
+              <div key={field}>
+                <label htmlFor={field} className="block text-lg font-semibold mb-2 capitalize">
+                  {field.replace(/([A-Z])/g, " $1")}
+                </label>
+                <input
+                  type="text"
+                  id={field}
+                  name={field}
+                  value={formData[field]}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-3 rounded-lg bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-teal-500"
+                  placeholder={`Enter ${field}`}
+                />
+              </div>
+            ))}
+
+            <div>
+              <label htmlFor="handmade" className="flex items-center text-lg font-semibold">
+                <input
+                  type="checkbox"
+                  id="handmade"
+                  name="handmade"
+                  checked={formData.handmade}
+                  onChange={handleInputChange}
+                  className="mr-2 w-5 h-5 rounded bg-gray-700 text-teal-500 focus:outline-none"
+                />
+                Handmade
+              </label>
+            </div>
+          </div>
+        </div>
+
+        {/* Bottom Section */}
+        <div className="space-y-8">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Size */}
+            <div>
+              <label className="block text-lg font-semibold mb-2">Size</label>
+              <div className="flex gap-4">
+                <input
+                  type="number"
+                  name="sizeValue"
+                  value={formData.sizeValue}
+                  onChange={handleInputChange}
+                  className="flex-grow px-4 py-3 rounded-lg bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-teal-500"
+                  placeholder="Size value"
+                />
+                <select
+                  name="sizeUnit"
+                  value={formData.sizeUnit}
+                  onChange={handleInputChange}
+                  className="w-1/3 px-4 py-3 rounded-lg bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-teal-500"
+                >
+                  {sizeUnits.map((unit, idx) => (
+                    <option key={idx} value={unit}>
+                      {unit}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            {/* Weight */}
+            <div>
+              <label className="block text-lg font-semibold mb-2">Weight</label>
+              <div className="flex gap-4">
+                <input
+                  type="number"
+                  name="weightValue"
+                  value={formData.weightValue}
+                  onChange={handleInputChange}
+                  className="flex-grow px-4 py-3 rounded-lg bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-teal-500"
+                  placeholder="Weight value"
+                />
+                <select
+                  name="weightUnit"
+                  value={formData.weightUnit}
+                  onChange={handleInputChange}
+                  className="w-1/3 px-4 py-3 rounded-lg bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-teal-500"
+                >
+                  {weightUnits.map((unit, idx) => (
+                    <option key={idx} value={unit}>
+                      {unit}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
           </div>
 
           {/* Tags */}
           <div>
-            <label className="block font-semibold mb-2">Tags</label>
-            <div className="flex flex-col relative">
-              <input
-                type="text"
-                value={tagsInput}
-                onChange={handleTagsInput}
-                className="w-full p-2 rounded bg-gray-800 text-white"
-                placeholder="Search for a tag"
-              />
-              {loadingTags && <p className="text-gray-400 mt-2">Loading suggestions...</p>}
-              {tagSuggestions.length > 0 && (
-                <ul className="absolute bg-gray-800 border border-gray-600 mt-2 rounded shadow-md w-full max-h-40 overflow-y-auto">
-                  {tagSuggestions.map((tag, index) => (
-                    <li
-                      key={index}
-                      onClick={() => addTag(tag.label)}
-                      className="p-2 cursor-pointer hover:bg-gray-700"
-                    >
-                      {tag.label}
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
-            <div className="flex flex-wrap gap-2 mt-2">
-              {formData.tags.map((tag, index) => (
+            <label className="block text-lg font-semibold mb-2">Tags</label>
+            <input
+              type="text"
+              value={tagsInput}
+              onChange={handleTagInputChange}
+              className="w-full px-4 py-3 rounded-lg bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-teal-500"
+              placeholder="Add tags"
+            />
+            <div className="mt-4">
+              {formData.tags.map((tag, idx) => (
                 <span
-                  key={index}
-                  className="bg-teal-700 px-3 py-1 rounded-full text-sm flex items-center gap-2"
+                  key={idx}
+                  className="inline-block bg-teal-700 px-3 py-1 rounded-full text-white mr-2 mb-2"
                 >
                   {tag}
-                  <button
-                    type="button"
-                    onClick={() => removeTag(index)}
-                    className="text-red-500"
-                  >
-                    &times;
-                  </button>
                 </span>
               ))}
             </div>
@@ -298,33 +443,31 @@ const CreatePostPage = () => {
 
           {/* Images */}
           <div>
-            <label className="block font-semibold mb-2">Images</label>
+            <label className="block text-lg font-semibold mb-2">Images</label>
             <input
               type="file"
               multiple
               onChange={handleImageUpload}
-              className="w-full"
+              className="w-full px-4 py-3 bg-gray-700 text-white rounded-lg"
             />
-            {loading && <p className="text-gray-400">Uploading images...</p>}
-            <div className="mt-4 grid grid-cols-3 gap-2">
-              {images.map((name, index) => (
-                <div key={index} className="bg-gray-800 p-2 rounded">
-                  {name}
-                </div>
-              ))}
-            </div>
           </div>
 
-          <button
-            type="submit"
-            className="bg-teal-500 w-full py-3 rounded hover:bg-teal-600 transition font-semibold"
-            disabled={loading}
-          >
-            Create Post
-          </button>
-        </form>
-      </div>
+          {/* Submit Button */}
+          <div>
+            <button
+              type="submit"
+              className="w-full px-6 py-3 bg-teal-500 text-white rounded-lg font-semibold hover:bg-teal-600 focus:outline-none"
+              disabled={loading}
+            >
+              {loading ? "Creating Post..." : "Create Post"}
+            </button>
+          </div>
+        </div>
+      </form>
     </div>
+  </div>
+</div>
+
   );
 };
 
