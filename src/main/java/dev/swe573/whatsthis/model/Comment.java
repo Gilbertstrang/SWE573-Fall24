@@ -14,16 +14,15 @@ public class Comment {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name="post_id", nullable = false)
-    @JsonIgnore
-    Post post;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name="user_id", nullable = false)
-    @OnDelete(action = OnDeleteAction.NO_ACTION)
-    @JsonIgnore
-    User user;
+    @Column(name = "post_id", nullable = false)
+    private Long postId;
+
+    @Column(name = "user_id", nullable = false)
+    private Long userId;
+
+    @Column(name = "username", nullable = false)
+    private String username;
 
 
     @Column(columnDefinition = "text")

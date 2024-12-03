@@ -39,8 +39,9 @@ public class CommentService {
         commentDTO.setId(comment.getId());
         commentDTO.setText(comment.getText());
         commentDTO.setVotes(comment.getVotes());
-        commentDTO.setUserId(comment.getUser().getId());
-        commentDTO.setPostId(comment.getPost().getId());
+        commentDTO.setUserId(comment.getUserId());
+        commentDTO.setPostId(comment.getPostId());
+        commentDTO.setUsername(comment.getUsername());
         return commentDTO;
     }
 
@@ -48,21 +49,23 @@ public class CommentService {
         Comment comment = new Comment();
         comment.setText(commentDto.getText());
         comment.setVotes(commentDto.getVotes());
+        comment.setUsername(commentDto.getUsername());
 
-        User user = userRepo.findById(commentDto.getUserId())
-                .orElseThrow(() -> new UserNotFoundException(commentDto.getUserId()));
-        comment.setUser(user);
+        comment.setUserId(commentDto.getUserId());
 
-        Post post = postRepo.findById(commentDto.getPostId())
-                .orElseThrow(() -> new PostNotFoundException(commentDto.getPostId()));
-        comment.setPost(post);
+        comment.setPostId(commentDto.getPostId());
 
         return comment;
     }
 
     public List<CommentDto> getCommentsByPostId(Long postId) {
-        return commentRepo.findById(postId).stream()
-                .map(this::toDto)
+        return commentRepo.findByPostId(postId).stream()
+                .map(comment -> {
+                    CommentDto commentDto = toDto(comment);
+                    commentDto.setUsername(userRepo.findById(comment.getUserId())
+                            .map(User::getUsername).orElse("Unknown"));
+                    return commentDto;
+                })
                 .collect(Collectors.toList());
     }
 

@@ -92,7 +92,7 @@ public class UserService implements UserDetailsService{
         userDto.setEmail(user.getEmail());
         userDto.setRoles(user.getRoles());
        // userDto.setPostIds(user.getPosts().stream().map(Post::getId).collect(Collectors.toList()));
-        userDto.setCommentIds(user.getComments().stream().map(Comment::getId).collect(Collectors.toList()));
+//        userDto.setCommentIds(user.getComments().stream().map(Comment::getId).collect(Collectors.toList()));
         return userDto;
     }
 

@@ -25,6 +25,8 @@ public class CommentController {
     //Create new comment
     @PostMapping
     public EntityModel<CommentDto> newComment(@RequestBody CommentDto commentDto) {
+        System.out.println("Received CommentDto: " + commentDto);
+
         CommentDto createdComment = commentService.newComment(commentDto);
 
         return EntityModel.of(createdComment,

@@ -10,5 +10,7 @@ public class CommentDto {
     private int votes;
 
     private Long userId;
+    private String username;
+
     private Long postId;
 }

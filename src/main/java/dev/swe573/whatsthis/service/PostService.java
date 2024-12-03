@@ -73,7 +73,7 @@ public class PostService {
         }
         post.setUserId(postDto.getUserId());
 
-        // Set other optional fields
+        //optional
         post.setMaterial(postDto.getMaterial());
         post.setSize(postDto.getSize());
         post.setColor(postDto.getColor());
@@ -96,7 +96,7 @@ public class PostService {
         post.setTags(postDto.getTags() != null ? postDto.getTags() : new ArrayList<>());
 
 
-        post.setComments(new ArrayList<>());
+//        post.setComments(new ArrayList<>());
 
         return post;
     }

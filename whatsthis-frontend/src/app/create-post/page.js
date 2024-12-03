@@ -2,42 +2,80 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useUser } from "../../context/UserContext";
 
-export default function CreatePostPage() {
+const CreatePostPage = () => {
+  const { user } = useUser();
+  const router = useRouter();
+
   const [formData, setFormData] = useState({
-    userId: "", // Replace with actual user ID
     title: "",
     description: "",
     material: "",
     size: "",
+    textAndLanguage: "",
     color: "",
+    shape: "",
+    weight: "",
+    descriptionOfParts: "",
     location: "",
     timePeriod: "",
+    smell: "",
+    taste: "",
+    texture: "",
+    hardness: "",
+    pattern: "",
+    brand: "",
+    print: "",
+    icons: "",
+    handmade: false,
+    functionality: "",
     tags: [],
     imageUrls: [],
   });
+
   const [tagsInput, setTagsInput] = useState("");
+  const [tagSuggestions, setTagSuggestions] = useState([]);
+  const [loadingTags, setLoadingTags] = useState(false);
   const [images, setImages] = useState([]);
   const [loading, setLoading] = useState(false);
-  const router = useRouter();
+  const [error, setError] = useState("");
 
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+  
+  const fetchTagSuggestions = async (query) => {
+    if (!query.trim()) {
+      setTagSuggestions([]);
+      return;
+    }
+
+    setLoadingTags(true);
+    try {
+      const res = await fetch(`http://localhost:8080/api/tags/search?query=${encodeURIComponent(query)}`);
+      if (!res.ok) {
+        throw new Error("Failed to fetch tag suggestions");
+      }
+      const tags = await res.json();
+      setTagSuggestions(tags);
+    } catch (err) {
+      console.error("Error fetching tag suggestions:", err);
+    } finally {
+      setLoadingTags(false);
+    }
   };
 
   const handleTagsInput = (e) => {
-    setTagsInput(e.target.value);
+    const query = e.target.value;
+    setTagsInput(query);
+    fetchTagSuggestions(query);
   };
 
-  const addTag = () => {
-    if (tagsInput.trim()) {
-      setFormData((prev) => ({
-        ...prev,
-        tags: [...prev.tags, tagsInput.trim()],
-      }));
-      setTagsInput("");
-    }
+  const addTag = (tag) => {
+    setFormData((prev) => ({
+      ...prev,
+      tags: [...prev.tags, tag],
+    }));
+    setTagsInput("");
+    setTagSuggestions([]);
   };
 
   const removeTag = (index) => {
@@ -58,32 +96,66 @@ export default function CreatePostPage() {
         method: "POST",
         body: formData,
       });
+
+      if (!res.ok) {
+        throw new Error("Failed to upload images");
+      }
+
       const urls = await res.json();
       setFormData((prev) => ({ ...prev, imageUrls: [...prev.imageUrls, ...urls] }));
       setImages((prev) => [...prev, ...files.map((file) => file.name)]);
     } catch (err) {
       console.error("Image upload failed:", err);
+      setError("Image upload failed. Please try again.");
     } finally {
       setLoading(false);
     }
   };
 
+  const handleInputChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: type === "checkbox" ? checked : value,
+    }));
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    if (!user) {
+      setError("You must be logged in to create a post.");
+      return;
+    }
+
+    const postData = {
+      ...formData,
+      userId: user.id, 
+    };
+
+    setLoading(true);
     try {
       const res = await fetch("http://localhost:8080/api/posts", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(postData),
       });
+
+      if (!res.ok) {
+        throw new Error("Failed to create post");
+      }
+
       const data = await res.json();
-      console.log("Post created:", data);
+      console.log("Post created successfully:", data);
+
       router.push("/");
     } catch (err) {
-      console.error("Error creating post:", err);
+      console.error("Post creation failed:", err);
+      setError("Failed to create post. Please try again.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -91,6 +163,12 @@ export default function CreatePostPage() {
     <div className="bg-gray-900 text-white min-h-screen p-8">
       <div className="container mx-auto max-w-3xl">
         <h1 className="text-3xl font-bold mb-6">Create a New Mystery Post</h1>
+
+        {error && (
+          <div className="bg-red-600 text-white p-4 rounded mb-4">
+            {error}
+          </div>
+        )}
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
@@ -122,97 +200,84 @@ export default function CreatePostPage() {
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label htmlFor="material" className="block font-semibold mb-2">
-                Material
+          
+          {[
+            "material",
+            "size",
+            "textAndLanguage",
+            "color",
+            "shape",
+            "weight",
+            "descriptionOfParts",
+            "location",
+            "timePeriod",
+            "smell",
+            "taste",
+            "texture",
+            "hardness",
+            "pattern",
+            "brand",
+            "print",
+            "icons",
+            "functionality",
+          ].map((field) => (
+            <div key={field}>
+              <label htmlFor={field} className="block font-semibold mb-2 capitalize">
+                {field.replace(/([A-Z])/g, " $1")}
               </label>
               <input
                 type="text"
-                id="material"
-                name="material"
-                value={formData.material}
+                id={field}
+                name={field}
+                value={formData[field]}
                 onChange={handleInputChange}
                 className="w-full p-2 rounded bg-gray-800 text-white"
               />
             </div>
+          ))}
 
-            <div>
-              <label htmlFor="size" className="block font-semibold mb-2">
-                Size
-              </label>
+          {/* Checkbox for Handmade */}
+          <div>
+            <label htmlFor="handmade" className="flex items-center space-x-2">
               <input
-                type="text"
-                id="size"
-                name="size"
-                value={formData.size}
+                type="checkbox"
+                id="handmade"
+                name="handmade"
+                checked={formData.handmade}
                 onChange={handleInputChange}
-                className="w-full p-2 rounded bg-gray-800 text-white"
+                className="rounded bg-gray-800"
               />
-            </div>
-
-            <div>
-              <label htmlFor="color" className="block font-semibold mb-2">
-                Color
-              </label>
-              <input
-                type="text"
-                id="color"
-                name="color"
-                value={formData.color}
-                onChange={handleInputChange}
-                className="w-full p-2 rounded bg-gray-800 text-white"
-              />
-            </div>
-
-            <div>
-              <label htmlFor="location" className="block font-semibold mb-2">
-                Location
-              </label>
-              <input
-                type="text"
-                id="location"
-                name="location"
-                value={formData.location}
-                onChange={handleInputChange}
-                className="w-full p-2 rounded bg-gray-800 text-white"
-              />
-            </div>
-
-            <div>
-              <label htmlFor="timePeriod" className="block font-semibold mb-2">
-                Time Period
-              </label>
-              <input
-                type="text"
-                id="timePeriod"
-                name="timePeriod"
-                value={formData.timePeriod}
-                onChange={handleInputChange}
-                className="w-full p-2 rounded bg-gray-800 text-white"
-              />
-            </div>
+              <span>Handmade</span>
+            </label>
           </div>
 
+          {/* Tags */}
           <div>
             <label className="block font-semibold mb-2">Tags</label>
-            <div className="flex gap-2 mb-2">
+            <div className="flex flex-col relative">
               <input
                 type="text"
                 value={tagsInput}
                 onChange={handleTagsInput}
                 className="w-full p-2 rounded bg-gray-800 text-white"
-                placeholder="Enter a tag"
+                placeholder="Search for a tag"
               />
-              <button
-                type="button"
-                onClick={addTag}
-                className="bg-teal-500 px-4 py-2 rounded hover:bg-teal-600 transition"
-              >
-                Add
-              </button>
+              {loadingTags && <p className="text-gray-400 mt-2">Loading suggestions...</p>}
+              {tagSuggestions.length > 0 && (
+                <ul className="absolute bg-gray-800 border border-gray-600 mt-2 rounded shadow-md w-full max-h-40 overflow-y-auto">
+                  {tagSuggestions.map((tag, index) => (
+                    <li
+                      key={index}
+                      onClick={() => addTag(tag.label)}
+                      className="p-2 cursor-pointer hover:bg-gray-700"
+                    >
+                      {tag.label}
+                    </li>
+                  ))}
+                </ul>
+              )}
             </div>
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-2 mt-2">
               {formData.tags.map((tag, index) => (
                 <span
                   key={index}
@@ -231,6 +296,7 @@ export default function CreatePostPage() {
             </div>
           </div>
 
+          {/* Images */}
           <div>
             <label className="block font-semibold mb-2">Images</label>
             <input
@@ -260,4 +326,6 @@ export default function CreatePostPage() {
       </div>
     </div>
   );
-}
+};
+
+export default CreatePostPage;
