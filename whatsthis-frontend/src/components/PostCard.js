@@ -6,7 +6,6 @@ const PostCard = ({ post }) => {
   const [commentCount, setCommentCount] = useState(0);
 
   useEffect(() => {
-
     if (!post.username) {
       fetch(`http://localhost:8080/api/users/${post.userId}`)
         .then((res) => res.json())
@@ -18,7 +17,6 @@ const PostCard = ({ post }) => {
         .catch((error) => console.error("Failed to fetch username:", error));
     }
 
-    
     fetch(`http://localhost:8080/api/comments/posts/${post.id}/comments`)
       .then((res) => res.json())
       .then((data) => {
@@ -30,9 +28,9 @@ const PostCard = ({ post }) => {
 
   return (
     <Link href={`/posts/${post.id}`} passHref>
-      <div className="bg-gray-800 text-white rounded-lg shadow-lg overflow-hidden cursor-pointer transform transition-transform duration-300 hover:scale-105 flex flex-col">
+      <div className="w-[500px] h-[600px] bg-gray-800 text-white rounded-lg shadow-lg overflow-hidden cursor-pointer transform transition-transform duration-300 hover:scale-105 flex flex-col">
         {/* Image Section */}
-        <div className="h-48 bg-gray-700">
+        <div className="h-[250px] bg-gray-700">
           {post.imageUrls && post.imageUrls.length > 0 ? (
             <img
               src={`http://localhost:8080/${post.imageUrls[0].split("/").pop()}`}
@@ -47,45 +45,45 @@ const PostCard = ({ post }) => {
         </div>
 
         {/* Content Section */}
-        <div className="p-4 flex flex-col justify-between flex-1">
+        <div className="p-6 flex flex-col justify-between flex-1">
           {/* Title */}
-          <h2 className="text-lg font-bold truncate">{post.title}</h2>
+          <h2 className="text-2xl font-bold mb-2">{post.title}</h2>
 
           {/* Description */}
-          <p className="text-gray-300 text-sm mt-2 line-clamp-3">
-            {post.description}
-          </p>
+          <p className="text-gray-300 text-base mb-4 line-clamp-4">{post.description}</p>
 
           {/* Username */}
-          <p className="text-teal-400 text-sm mt-2">
-            <span className="font-medium">{username}</span>
-          </p>
+          <div className="mb-4">
+            <Link href={`/profile/${post.userId}`} className="text-teal-400 text-lg hover:underline">
+              {username}
+            </Link>
+          </div>
 
           {/* Tags */}
           {post.tags && post.tags.length > 0 && (
-            <div className="mt-3 flex flex-wrap gap-2">
-              {post.tags.slice(0, 3).map((tag, index) => (
+            <div className="mb-4 flex flex-wrap gap-2">
+              {post.tags.slice(0, 5).map((tag, index) => (
                 <span
                   key={index}
-                  className="bg-teal-600 text-white text-xs px-2 py-1 rounded-full"
+                  className="bg-teal-600 text-white text-sm px-3 py-1 rounded-full"
                 >
                   {tag}
                 </span>
               ))}
-              {post.tags.length > 3 && (
-                <span className="bg-gray-600 text-white text-xs px-2 py-1 rounded-full">
-                  +{post.tags.length - 3}
+              {post.tags.length > 5 && (
+                <span className="bg-gray-600 text-white text-sm px-3 py-1 rounded-full">
+                  +{post.tags.length - 5}
                 </span>
               )}
             </div>
           )}
 
           {/* Votes and Comments */}
-          <div className="flex justify-between items-center mt-4">
-            <span className="text-teal-400 font-bold text-sm">
+          <div className="flex justify-between items-center">
+            <span className="text-teal-400 font-bold text-lg">
               {post.votes} {post.votes === 1 ? "Vote" : "Votes"}
             </span>
-            <span className="text-gray-400 font-bold text-sm">
+            <span className="text-gray-400 font-bold text-lg">
               {commentCount} {commentCount === 1 ? "Comment" : "Comments"}
             </span>
           </div>

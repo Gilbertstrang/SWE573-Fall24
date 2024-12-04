@@ -175,7 +175,7 @@ const CreatePostPage = () => {
     <div className="max-w-full mx-auto bg-gray-800 rounded-lg shadow-lg p-8">
       {/* Top Section */}
       <div className="mb-8">
-        <h1 className="text-4xl font-bold text-center mb-4">Create a New Mystery Post</h1>
+        <h1 className="text-4xl font-bold text-center mb-4">Create a New Post</h1>
         {error && (
           <div className="bg-red-600 text-white p-4 rounded mb-4">
             {error}
