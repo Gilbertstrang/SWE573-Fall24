@@ -4,12 +4,12 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import postService from "../services/postService";
 import PostCard from "../components/PostCard";
-import { useUser } from "../context/UserContext"; // Import the user context
+import { useUser } from "../context/UserContext";
 
 export default function HomePage() {
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
-  const { user } = useUser(); // Get the logged-in user
+  const { user } = useUser();
 
   useEffect(() => {
     const fetchPosts = async () => {
@@ -29,7 +29,7 @@ export default function HomePage() {
     <div className="bg-gray-900 text-white min-h-screen p-8">
       <div className="container mx-auto">
         <div className="text-center mb-12">
-          {user && ( // Only show the button if the user is logged in
+          {user && (
             <Link href="create-post">
               <button className="bg-teal-500 text-white px-10 py-5 text-2xl font-semibold rounded-lg hover:bg-teal-600 transition shadow-lg">
                 New Mystery
@@ -43,7 +43,7 @@ export default function HomePage() {
             <div className="text-teal-300 text-xl">Loading...</div>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 items-start">
             {posts.map((post) => (
               <PostCard key={post.id} post={post} />
             ))}
