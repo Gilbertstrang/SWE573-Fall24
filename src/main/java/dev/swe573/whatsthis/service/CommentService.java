@@ -30,6 +30,13 @@ public class CommentService {
 
     public CommentDto newComment(CommentDto commentDto) {
         Comment comment = toEntity(commentDto);
+
+        if (commentDto.getParentCommentId() != null) {
+            Comment parentComment = commentRepo.findById(commentDto.getParentCommentId())
+                    .orElseThrow(() -> new CommentNotFoundException(commentDto.getParentCommentId()));
+            comment.setParentComment(parentComment);
+        }
+
         comment = commentRepo.save(comment);
         return toDto(comment);
     }
@@ -42,6 +49,8 @@ public class CommentService {
         commentDTO.setUserId(comment.getUserId());
         commentDTO.setPostId(comment.getPostId());
         commentDTO.setUsername(comment.getUsername());
+        commentDTO.setParentCommentId(comment.getParentComment() != null ? comment.getParentComment().getId() : null);
+        commentDTO.setImageUrls(comment.getImageUrls());
         return commentDTO;
     }
 
@@ -54,6 +63,8 @@ public class CommentService {
         comment.setUserId(commentDto.getUserId());
 
         comment.setPostId(commentDto.getPostId());
+
+        comment.setImageUrls(commentDto.getImageUrls());
 
         return comment;
     }

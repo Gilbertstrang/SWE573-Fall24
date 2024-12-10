@@ -3,8 +3,10 @@ package dev.swe573.whatsthis.service;
 import dev.swe573.whatsthis.controller.CommentNotFoundException;
 import dev.swe573.whatsthis.controller.PostNotFoundException;
 import dev.swe573.whatsthis.controller.UserNotFoundException;
+import dev.swe573.whatsthis.dto.PartDto;
 import dev.swe573.whatsthis.dto.PostDto;
 import dev.swe573.whatsthis.dto.TagDto;
+import dev.swe573.whatsthis.model.Part;
 import dev.swe573.whatsthis.model.Post;
 import dev.swe573.whatsthis.model.User;
 import dev.swe573.whatsthis.model.Comment;
@@ -57,7 +59,9 @@ public class PostService {
     @Transactional
     public PostDto newPost(PostDto postDto) {
         Post post = toEntity(postDto);
+        System.out.println("Parts before saving: " + post.getParts());
         post = postRepo.save(post);
+        System.out.println("Parts after saving: " + post.getParts());
         return toDto(post);
     }
 
@@ -98,6 +102,40 @@ public class PostService {
 
 //        post.setComments(new ArrayList<>());
 
+        System.out.println("Incoming parts data: " + postDto.getParts());
+
+        if (postDto.getParts() != null && !postDto.getParts().isEmpty()) {
+            List<Part> parts = postDto.getParts().stream()
+                .map(partDto -> {
+                    Part part = new Part();
+                    part.setPartName(partDto.getPartName());
+                    part.setMaterial(partDto.getMaterial());
+                    part.setSize(partDto.getSize());
+                    part.setTextAndLanguage(partDto.getTextAndLanguage());
+                    part.setColor(partDto.getColor());
+                    part.setShape(partDto.getShape());
+                    part.setWeight(partDto.getWeight());
+                    part.setDescriptionOfParts(partDto.getDescriptionOfParts());
+                    part.setLocation(partDto.getLocation());
+                    part.setTimePeriod(partDto.getTimePeriod());
+                    part.setSmell(partDto.getSmell());
+                    part.setTaste(partDto.getTaste());
+                    part.setTexture(partDto.getTexture());
+                    part.setHardness(partDto.getHardness());
+                    part.setPattern(partDto.getPattern());
+                    part.setBrand(partDto.getBrand());
+                    part.setPrint(partDto.getPrint());
+                    part.setIcons(partDto.getIcons());
+                    part.setHandmade(partDto.getHandmade());
+                    part.setFunctionality(partDto.getFunctionality());
+                    return part;
+                })
+                .collect(Collectors.toList());
+            post.setParts(parts);
+        } else {
+            post.setParts(new ArrayList<>());
+        }
+
         return post;
     }
 
@@ -137,6 +175,40 @@ public class PostService {
         postDto.setComments(new ArrayList<>());
 
         postDto.setTags(post.getTags() != null ? post.getTags() : new ArrayList<>());
+
+        System.out.println("Converting parts to DTO: " + post.getParts());
+
+        if (post.getParts() != null && !post.getParts().isEmpty()) {
+            List<PartDto> partDtos = post.getParts().stream()
+                .map(part -> {
+                    PartDto partDto = new PartDto();
+                    partDto.setPartName(part.getPartName());
+                    partDto.setMaterial(part.getMaterial());
+                    partDto.setSize(part.getSize());
+                    partDto.setTextAndLanguage(part.getTextAndLanguage());
+                    partDto.setColor(part.getColor());
+                    partDto.setShape(part.getShape());
+                    partDto.setWeight(part.getWeight());
+                    partDto.setDescriptionOfParts(part.getDescriptionOfParts());
+                    partDto.setLocation(part.getLocation());
+                    partDto.setTimePeriod(part.getTimePeriod());
+                    partDto.setSmell(part.getSmell());
+                    partDto.setTaste(part.getTaste());
+                    partDto.setTexture(part.getTexture());
+                    partDto.setHardness(part.getHardness());
+                    partDto.setPattern(part.getPattern());
+                    partDto.setBrand(part.getBrand());
+                    partDto.setPrint(part.getPrint());
+                    partDto.setIcons(part.getIcons());
+                    partDto.setHandmade(part.getHandmade());
+                    partDto.setFunctionality(part.getFunctionality());
+                    return partDto;
+                })
+                .collect(Collectors.toList());
+            postDto.setParts(partDtos);
+        } else {
+            postDto.setParts(new ArrayList<>());
+        }
 
         return postDto;
     }

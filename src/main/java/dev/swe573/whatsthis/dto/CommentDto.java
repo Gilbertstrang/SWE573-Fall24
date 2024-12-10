@@ -2,6 +2,9 @@ package dev.swe573.whatsthis.dto;
 
 import lombok.Data;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Data
 public class CommentDto {
 
@@ -13,4 +16,7 @@ public class CommentDto {
     private String username;
 
     private Long postId;
+
+    private Long parentCommentId;
+    private List<String> imageUrls = new ArrayList<>();
 }

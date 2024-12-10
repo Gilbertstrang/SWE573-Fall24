@@ -80,4 +80,7 @@ public class Post {
 //    @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
 //    private List<Comment> comments = new ArrayList<>();
 
+    @ElementCollection
+    @CollectionTable(name = "post_parts", joinColumns = @JoinColumn(name = "post_id"))
+    private List<Part> parts = new ArrayList<>();
 }

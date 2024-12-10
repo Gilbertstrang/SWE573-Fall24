@@ -21,11 +21,14 @@ export default function DetailedPostPage() {
   const [comments, setComments] = useState([]);
   const [userVote, setUserVote] = useState(null);
   const [fullscreenImage, setFullscreenImage] = useState(null);
+  const [activeTab, setActiveTab] = useState("details");
 
   useEffect(() => {
     const fetchPostAndComments = async () => {
       try {
         const fetchedPost = await postService.getPostById(id);
+        console.log('Fetched post data:', fetchedPost);
+        console.log('Parts data:', fetchedPost.parts);
         setPost(fetchedPost);
 
         const userRes = await fetch(`http://localhost:8080/api/users/${fetchedPost.userId}`);
@@ -201,10 +204,81 @@ export default function DetailedPostPage() {
           </div>
 
           <div className="w-full lg:w-1/3">
-            <h3 className="text-xl font-bold mb-4">Details</h3>
-            <table className="w-full text-left border-collapse border border-gray-700">
-              <tbody>{renderAttributes()}</tbody>
-            </table>
+            {/* Tab Selection */}
+            <div className="flex mb-4">
+              <button
+                className={`px-4 py-2 rounded-t-lg ${
+                  activeTab === "details"
+                    ? "bg-gray-700 text-white"
+                    : "bg-gray-800 text-gray-400 hover:text-white"
+                }`}
+                onClick={() => setActiveTab("details")}
+              >
+                General
+              </button>
+              <button
+                className={`px-4 py-2 rounded-t-lg ${
+                  activeTab === "parts"
+                    ? "bg-gray-700 text-white"
+                    : "bg-gray-800 text-gray-400 hover:text-white"
+                }`}
+                onClick={() => setActiveTab("parts")}
+              >
+                Parts
+              </button>
+            </div>
+
+            {/* Tab Content */}
+            {activeTab === "details" ? (
+              <>
+                <h3 className="text-xl font-bold mb-4">Details</h3>
+                <table className="w-full text-left border-collapse border border-gray-700">
+                  <tbody>{renderAttributes()}</tbody>
+                </table>
+              </>
+            ) : (
+              <>
+                <h3 className="text-xl font-bold mb-4">Parts</h3>
+                {post.parts && post.parts.length > 0 ? (
+                  post.parts.map((part, index) => (
+                    <div key={index} className="mb-6 bg-gray-700 p-4 rounded-lg">
+                      <h4 className="text-lg font-bold text-teal-400 mb-2">
+                        {part.partName || `Part ${index + 1}`}
+                      </h4>
+                      <div className="grid grid-cols-2 gap-4">
+                        {Object.entries(part)
+                          .filter(([key, value]) => 
+                            value !== null && 
+                            value !== undefined && 
+                            value !== '' && 
+                            key !== 'partName'
+                          )
+                          .map(([key, value]) => (
+                            <div key={key} className="border-b border-gray-600 py-2">
+                              <span className="font-semibold text-gray-300 capitalize">
+                                {key.replace(/([A-Z])/g, ' $1').trim()}:
+                              </span>
+                              <span className="ml-2 text-gray-400">
+                                {typeof value === 'boolean' 
+                                  ? (value ? 'Yes' : 'No') 
+                                  : value}
+                              </span>
+                            </div>
+                          ))}
+                      </div>
+                      {/* Add visual separator between parts */}
+                      {index < post.parts.length - 1 && (
+                        <div className="border-b border-gray-600 mt-4"></div>
+                      )}
+                    </div>
+                  ))
+                ) : (
+                  <div className="py-4 px-2 text-gray-400 text-center bg-gray-700 rounded-lg">
+                    No parts information available
+                  </div>
+                )}
+              </>
+            )}
 
             {post.tags && post.tags.length > 0 && (
               <div className="mt-6">

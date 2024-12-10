@@ -24,9 +24,10 @@ const createPost = async (formData) => {
   try {
     const response = await axiosInstance.post('/posts', formData, {
       headers: {
-        'Content-Type': 'multipart/form-data',
+        'Content-Type': 'application/json',
       },
     });
+    console.log('Create post response:', response.data);
     return response.data;
   } catch (error) {
     console.error('Error creating post:', error);

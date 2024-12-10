@@ -1,20 +1,14 @@
-package dev.swe573.whatsthis.dto;
+package dev.swe573.whatsthis.model;
 
+import jakarta.persistence.*;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
-import java.util.List;
-
+@Embeddable
 @Data
-public class PostDto {
-    private Long id;
-    private String title;
-    private String description;
-    private int votes;
-    private Long userId;
-
-    private List<String> tags;
-    private List<String> imageUrls;
-
+@NoArgsConstructor
+public class Part {
+    private String partName;
     private String material;
     private String size;
     private String textAndLanguage;
@@ -34,8 +28,4 @@ public class PostDto {
     private String icons;
     private Boolean handmade;
     private String functionality;
-
-    private List<CommentDto> comments;
-    private List<PartDto> parts;
-
-}
+} 
