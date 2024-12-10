@@ -63,9 +63,15 @@ const PostCard = ({ post }) => {
 
           {/* Username */}
           <p className="text-teal-400 text-sm mt-2 truncate">
-            <Link href={`/profile/${post.userId}`}>
-              <span className="hover:underline">{username}</span>
-            </Link>
+            <span 
+              onClick={(e) => {
+                e.preventDefault();
+                window.location.href = `/profile/${post.userId}`;
+              }}
+              className="hover:underline cursor-pointer"
+            >
+              {username}
+            </span>
           </p>
 
           {/* Tags */}
