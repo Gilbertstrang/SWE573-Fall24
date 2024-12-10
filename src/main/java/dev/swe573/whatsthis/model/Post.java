@@ -83,4 +83,10 @@ public class Post {
     @ElementCollection
     @CollectionTable(name = "post_parts", joinColumns = @JoinColumn(name = "post_id"))
     private List<Part> parts = new ArrayList<>();
+
+    @Column(nullable = false, columnDefinition = "boolean default false")
+    private boolean isSolved = false;
+
+    @Column(nullable = true)
+    private Long solutionCommentId;
 }

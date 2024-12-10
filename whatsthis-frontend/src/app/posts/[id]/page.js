@@ -27,36 +27,45 @@ export default function DetailedPostPage() {
     const fetchPostAndComments = async () => {
       try {
         const fetchedPost = await postService.getPostById(id);
-        console.log('Fetched post data:', fetchedPost);
-        console.log('Parts data:', fetchedPost.parts);
         setPost(fetchedPost);
 
         const userRes = await fetch(`http://localhost:8080/api/users/${fetchedPost.userId}`);
         if (userRes.ok) {
           const userData = await userRes.json();
           setUsername(userData.username);
-          setProfilePicture(userData.profilePicture || "/default-avatar.png");
+          setProfilePicture(userData.profilePicture || "https://www.gravatar.com/avatar/default?d=mp");
         }
 
         const fetchedComments = await commentService.getCommentsByPostId(id);
-        setComments(
-          await Promise.all(
-            fetchedComments.map(async (comment) => {
-              const commenterRes = await fetch(`http://localhost:8080/api/users/${comment.userId}`);
-              const commenter = commenterRes.ok ? await commenterRes.json() : {};
+        const commentsWithUserData = await Promise.all(
+          fetchedComments.map(async (comment) => {
+            try {
+              const userRes = await fetch(`http://localhost:8080/api/users/${comment.userId}`);
+              const userData = await userRes.json();
               return {
                 ...comment,
-                commenterUsername: commenter.username || `User ${comment.userId}`,
-                profilePicture: commenter.profilePicture || "/default-avatar.png",
+                commenterUsername: userData.username,
+                profilePicture: userData.profilePicture || "https://www.gravatar.com/avatar/default?d=mp"
               };
-            })
-          )
+            } catch (error) {
+              console.error(`Error fetching user data for comment ${comment.id}:`, error);
+              return {
+                ...comment,
+                commenterUsername: "Unknown User",
+                profilePicture: "https://www.gravatar.com/avatar/default?d=mp"
+              };
+            }
+          })
         );
 
-        if (user) {
-          const userVote = await postService.getUserVote(id, user.id);
-          setUserVote(userVote);
-        }
+        const sortedComments = commentsWithUserData.sort((a, b) => {
+          if (a.id === fetchedPost.solutionCommentId) return -1;
+          if (b.id === fetchedPost.solutionCommentId) return 1;
+          return 0;
+        });
+
+        setComments(sortedComments);
+
       } catch (error) {
         console.error("Error fetching post details:", error);
       } finally {
@@ -143,6 +152,34 @@ export default function DetailedPostPage() {
     setFullscreenImage(null);
   };
 
+  const handleMarkSolution = async (commentId) => {
+    if (!user || user.id !== post.userId) {
+      return;
+    }
+
+    try {
+      const response = await fetch(
+        `http://localhost:8080/api/posts/${post.id}/solution/${commentId}`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+
+      if (response.ok) {
+        const updatedPost = await response.json();
+        setPost(updatedPost);
+      } else {
+        const errorText = await response.text();
+        console.error('Error marking solution:', errorText);
+      }
+    } catch (error) {
+      console.error('Error marking solution:', error);
+    }
+  };
+
   if (isLoading) {
     return <div className="text-teal-300 text-center text-xl mt-10">Loading...</div>;
   }
@@ -178,8 +215,15 @@ export default function DetailedPostPage() {
           </Link>
         </div>
 
-        {/* Title */}
-        <h1 className="text-3xl font-bold mb-6">{post.title}</h1>
+        {/* Updated title section */}
+        <div className="flex items-center gap-4 mb-6">
+          <h1 className="text-3xl font-bold">{post.title}</h1>
+          {post.isSolved && (
+            <span className="bg-green-500 text-white px-3 py-1 rounded-full text-sm">
+              Solved
+            </span>
+          )}
+        </div>
 
         {/* Main Content */}
         <div className="flex flex-wrap lg:flex-nowrap gap-6">
@@ -266,7 +310,6 @@ export default function DetailedPostPage() {
                             </div>
                           ))}
                       </div>
-                      {/* Add visual separator between parts */}
                       {index < post.parts.length - 1 && (
                         <div className="border-b border-gray-600 mt-4"></div>
                       )}
@@ -318,25 +361,45 @@ export default function DetailedPostPage() {
           </div>
         </div>
 
-        {/* Comments */}
+        {/* Updated comments section */}
         <div className="mt-8">
           <h3 className="text-xl font-bold mb-4">Comments</h3>
           {comments && comments.length > 0 ? (
             comments.map((comment, index) => (
-              <div key={index} className="bg-gray-700 p-4 rounded-md mb-4 flex items-start">
+              <div 
+                key={index} 
+                className={`bg-gray-700 p-4 rounded-md mb-4 flex items-start ${
+                  comment.id === post.solutionCommentId ? 'border-2 border-green-500' : ''
+                }`}
+              >
                 <img
                   src={comment.profilePicture}
                   alt={`${comment.commenterUsername}'s profile`}
                   className="w-10 h-10 rounded-full mr-4 object-cover"
                 />
-                <div>
-                  <Link
-                    href={`/profile/${comment.userId}`}
-                    className="text-teal-400 font-bold hover:underline"
-                  >
-                    {comment.commenterUsername}
-                  </Link>
+                <div className="flex-grow">
+                  <div className="flex justify-between items-center">
+                    <Link
+                      href={`/profile/${comment.userId}`}
+                      className="text-teal-400 font-bold hover:underline"
+                    >
+                      {comment.commenterUsername || comment.username}
+                    </Link>
+                    {user && user.id === post.userId && !post.isSolved && (
+                      <button
+                        onClick={() => handleMarkSolution(comment.id)}
+                        className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded-md text-sm"
+                      >
+                        Mark as Solution
+                      </button>
+                    )}
+                  </div>
                   <p className="text-gray-400">{comment.text}</p>
+                  {comment.id === post.solutionCommentId && (
+                    <div className="mt-2 text-green-500 font-bold">
+                      ✓ Solution
+                    </div>
+                  )}
                 </div>
               </div>
             ))

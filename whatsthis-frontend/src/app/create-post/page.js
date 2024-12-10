@@ -187,7 +187,6 @@ const CreatePostPage = () => {
       return;
     }
 
-    // Format the parts data properly
     const formattedParts = parts.map(part => ({
       partName: part.partName,
       material: part.material,
@@ -216,7 +215,7 @@ const CreatePostPage = () => {
       size: `${formData.sizeValue} ${formData.sizeUnit}`,
       weight: `${formData.weightValue} ${formData.weightUnit}`,
       userId: user.id,
-      parts: formattedParts, // Use the formatted parts
+      parts: formattedParts, 
     };
 
     setLoading(true);
@@ -261,7 +260,6 @@ const CreatePostPage = () => {
 
           {/* Form Section */}
           <form onSubmit={handleSubmit} className="space-y-8">
-            {/* Title and Description - Always visible */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               <div className="lg:col-span-3">
                 <label htmlFor="title" className="block text-lg font-semibold mb-2">

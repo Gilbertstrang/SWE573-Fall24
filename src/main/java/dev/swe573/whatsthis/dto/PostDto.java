@@ -38,4 +38,7 @@ public class PostDto {
     private List<CommentDto> comments;
     private List<PartDto> parts;
 
+    private Long solutionCommentId;
+    private boolean isSolved;
+
 }

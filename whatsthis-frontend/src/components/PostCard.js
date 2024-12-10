@@ -28,7 +28,14 @@ const PostCard = ({ post }) => {
 
   return (
     <Link href={`/posts/${post.id}`} passHref>
-      <div className="bg-gray-800 text-white rounded-lg shadow-lg overflow-hidden cursor-pointer transform transition-transform duration-300 hover:scale-105 w-full h-[500px] flex flex-col">
+      <div className="bg-gray-800 text-white rounded-lg shadow-lg overflow-hidden cursor-pointer transform transition-transform duration-300 hover:scale-105 w-full h-[500px] flex flex-col relative">
+        {/* Solved Badge */}
+        {post.solved && (
+          <div className="absolute top-2 left-2 bg-green-500 text-white px-2 py-1 rounded-md text-sm font-semibold z-10">
+            SOLVED
+          </div>
+        )}
+
         {/* Image Section */}
         <div className="h-[200px] bg-gray-700 flex-shrink-0">
           {post.imageUrls && post.imageUrls.length > 0 ? (

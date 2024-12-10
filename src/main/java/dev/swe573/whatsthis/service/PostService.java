@@ -210,6 +210,9 @@ public class PostService {
             postDto.setParts(new ArrayList<>());
         }
 
+        postDto.setSolutionCommentId(post.getSolutionCommentId());
+        postDto.setSolved(post.isSolved());
+
         return postDto;
     }
 
@@ -266,5 +269,24 @@ public class PostService {
         return postRepo.findByUserId(userId).stream()
                 .map(this::toDto)
                 .collect(Collectors.toList());
+    }
+
+    @Transactional
+    public PostDto markAsSolution(Long postId, Long commentId) {
+        Post post = postRepo.findById(postId)
+                .orElseThrow(() -> new PostNotFoundException(postId));
+        Comment comment = commentRepo.findById(commentId)
+                .orElseThrow(() -> new CommentNotFoundException(commentId));
+
+
+        if (!comment.getPostId().equals(postId)) {
+            throw new IllegalArgumentException("Comment does not belong to this post");
+        }
+
+        post.setSolutionCommentId(commentId);
+        post.setSolved(true);
+        
+        Post updatedPost = postRepo.save(post);
+        return toDto(updatedPost);
     }
 }

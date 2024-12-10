@@ -1,8 +1,8 @@
 import axiosInstance from './axiosInstance';
 
-const getCommentsByPostId = async (postId) => {
+export const getCommentsByPostId = async (postId) => {
   try {
-    const response = await axiosInstance.get(`/api/comments/posts/${postId}/comments`);
+    const response = await axiosInstance.get(`/comments/posts/${postId}/comments`);
     return response.data._embedded?.commentDtoes || [];
   } catch (error) {
     console.error('Error fetching comments:', error);
@@ -10,9 +10,9 @@ const getCommentsByPostId = async (postId) => {
   }
 };
 
-const addComment = async (commentData) => {
+export const addComment = async (commentData) => {
   try {
-    const response = await axiosInstance.post('/api/comments', commentData);
+    const response = await axiosInstance.post('/comments', commentData);
     return response.data;
   } catch (error) {
     console.error('Error adding comment:', error);
