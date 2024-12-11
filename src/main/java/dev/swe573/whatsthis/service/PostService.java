@@ -126,7 +126,7 @@ public class PostService {
                     part.setHardness(partDto.getHardness());
                     part.setPattern(partDto.getPattern());
                     part.setBrand(partDto.getBrand());
-                    partDto.setPrint(partDto.getPrint());
+                    part.setPrint(partDto.getPrint());
                     part.setIcons(partDto.getIcons());
                     part.setHandmade(partDto.getHandmade());
                     part.setFunctionality(partDto.getFunctionality());
@@ -335,7 +335,7 @@ public class PostService {
         userVotes.remove(key);
     }
 
-    // Add this at class level
+    // Add this at class level ????
     private static final Map<String, String> userVotes = new ConcurrentHashMap<>();
 
     public List<PostDto> searchPosts(Map<String, String> searchParams) {
@@ -353,33 +353,22 @@ public class PostService {
                 post.getDescription().toLowerCase().contains(query);
             if (!matchesBasicSearch) return false;
         }
-
-        // Material
+        // basic parameter inclution
         if (params.containsKey("material") && !params.get("material").isEmpty()) {
             if (!params.get("material").equals(post.getMaterial())) return false;
         }
-
-        // Color
         if (params.containsKey("color") && !params.get("color").isEmpty()) {
             if (!params.get("color").equals(post.getColor())) return false;
         }
-
-        // Shape
         if (params.containsKey("shape") && !params.get("shape").isEmpty()) {
             if (!params.get("shape").equals(post.getShape())) return false;
         }
-
-        // Time Period
         if (params.containsKey("timePeriod") && !params.get("timePeriod").isEmpty()) {
             if (!params.get("timePeriod").equals(post.getTimePeriod())) return false;
         }
-
-        // Pattern
         if (params.containsKey("pattern") && !params.get("pattern").isEmpty()) {
             if (!params.get("pattern").equals(post.getPattern())) return false;
         }
-
-        // Handmade
         if (params.containsKey("handmade") && params.get("handmade").equals("true")) {
             if (!Boolean.TRUE.equals(post.getHandmade())) return false;
         }
