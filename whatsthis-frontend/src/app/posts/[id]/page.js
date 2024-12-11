@@ -22,7 +22,7 @@ export default function DetailedPostPage() {
   const [userVote, setUserVote] = useState(null);
   const [fullscreenImage, setFullscreenImage] = useState(null);
   const [activeTab, setActiveTab] = useState("details");
-  const [replyingTo, setReplyingTo] = useState(null);
+  const [loginWarning, setLoginWarning] = useState(false);
 
   useEffect(() => {
     const fetchPostAndComments = async () => {
@@ -67,6 +67,12 @@ export default function DetailedPostPage() {
 
         setComments(sortedComments);
 
+        
+        if (user) {
+          const currentUserVote = await postService.getUserVote(id, user.id);
+          setUserVote(currentUserVote);
+        }
+
       } catch (error) {
         console.error("Error fetching post details:", error);
       } finally {
@@ -79,37 +85,22 @@ export default function DetailedPostPage() {
 
   const handleVote = async (voteType) => {
     if (!user) {
-      router.push("/login");
+      setLoginWarning(true);
+      setTimeout(() => setLoginWarning(false), 3000);
       return;
     }
 
     try {
-      if (userVote === voteType) {
-        await postService.cancelVote(post.id, user.id);
-        setPost({ ...post, votes: post.votes - (voteType === "upvote" ? 1 : -1) });
-        setUserVote(null);
-      } else {
-        if (userVote) {
-          await postService.cancelVote(post.id, user.id);
-          setPost({
-            ...post,
-            votes: post.votes - (userVote === "upvote" ? 1 : -1),
-          });
-        }
-
-        await postService.votePost(post.id, user.id, voteType);
-        setPost({
-          ...post,
-          votes: post.votes + (voteType === "upvote" ? 1 : -1),
-        });
-        setUserVote(voteType);
-      }
+      const updatedPost = await postService.votePost(post.id, user.id, voteType);
+      setPost(updatedPost);
+      const newUserVote = await postService.getUserVote(post.id, user.id);
+      setUserVote(newUserVote);
     } catch (error) {
       console.error(`Error ${voteType}ing post:`, error);
     }
   };
 
-  const handleCommentSubmit = async (parentCommentId = null) => {
+  const handleCommentSubmit = async () => {
     if (!newComment.trim()) {
       setError("Comment cannot be empty.");
       return;
@@ -126,18 +117,19 @@ export default function DetailedPostPage() {
       postId: post.id,
       username: user.username,
       votes: 0,
-      parentCommentId: parentCommentId
     };
 
     try {
       const comment = await commentService.addComment(commentData);
-      setComments(prev => [...prev, {
-        ...comment,
-        commenterUsername: user.username,
-        profilePicture: user.profilePicture || "/default-avatar.png",
-      }]);
+      setComments((prev) => [
+        ...prev,
+        {
+          ...comment,
+          commenterUsername: user.username,
+          profilePicture: user.profilePicture || "/default-avatar.png",
+        },
+      ]);
       setNewComment("");
-      setReplyingTo(null);
     } catch (error) {
       console.error("Error submitting comment:", error);
       setError("Failed to submit comment. Please try again.");
@@ -178,92 +170,6 @@ export default function DetailedPostPage() {
     } catch (error) {
       console.error('Error marking solution:', error);
     }
-  };
-
-  const renderComment = (comment, level = 0) => {
-    const replies = comments.filter(c => c.parentCommentId === comment.id);
-    
-    return (
-      <div key={comment.id} style={{ marginLeft: `${level * 20}px` }}>
-        <div 
-          className={`bg-gray-700 p-4 rounded-md mb-2 flex items-start ${
-            comment.id === post.solutionCommentId ? 'border-2 border-green-500' : ''
-          }`}
-        >
-          <img
-            src={comment.profilePicture}
-            alt={`${comment.commenterUsername}'s profile`}
-            className="w-10 h-10 rounded-full mr-4 object-cover"
-          />
-          <div className="flex-grow">
-            <div className="flex justify-between items-center">
-              <Link
-                href={`/profile/${comment.userId}`}
-                className="text-teal-400 font-bold hover:underline"
-              >
-                {comment.commenterUsername || comment.username}
-              </Link>
-              <div className="flex gap-2">
-                {user && (
-                  <button
-                    onClick={() => setReplyingTo(replyingTo === comment.id ? null : comment.id)}
-                    className="text-teal-400 hover:text-teal-300 text-sm"
-                  >
-                    Reply
-                  </button>
-                )}
-                {user && user.id === post.userId && !post.isSolved && (
-                  <button
-                    onClick={() => handleMarkSolution(comment.id)}
-                    className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded-md text-sm"
-                  >
-                    Mark as Solution
-                  </button>
-                )}
-              </div>
-            </div>
-            <p className="text-gray-400">{comment.text}</p>
-            {comment.id === post.solutionCommentId && (
-              <div className="mt-2 text-green-500 font-bold">
-                ✓ Solution
-              </div>
-            )}
-          </div>
-        </div>
-
-        {replyingTo === comment.id && (
-          <div className="ml-14 mb-4">
-            <textarea
-              className="w-full p-2 rounded bg-gray-800 text-white mb-2"
-              rows="2"
-              value={newComment}
-              onChange={(e) => setNewComment(e.target.value)}
-              placeholder="Write a reply..."
-            ></textarea>
-            <div className="flex gap-2">
-              <button
-                onClick={() => handleCommentSubmit(comment.id)}
-                className="bg-teal-500 hover:bg-teal-600 text-white px-3 py-1 rounded-md text-sm"
-              >
-                Submit Reply
-              </button>
-              <button
-                onClick={() => setReplyingTo(null)}
-                className="bg-gray-600 hover:bg-gray-500 text-white px-3 py-1 rounded-md text-sm"
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        )}
-
-        {replies.length > 0 && (
-          <div className="ml-10">
-            {replies.map(reply => renderComment(reply, level + 1))}
-          </div>
-        )}
-      </div>
-    );
   };
 
   if (isLoading) {
@@ -429,38 +335,119 @@ export default function DetailedPostPage() {
           <div className="flex items-center">
             <button
               onClick={() => handleVote("upvote")}
-              className={`px-4 py-2 rounded-md mr-4 ${
-                userVote === "upvote" ? "bg-teal-600" : "bg-teal-500 hover:bg-teal-600"
-              } text-white`}
+              className={`px-4 py-2 rounded-md mr-4 transition-colors duration-200 ${
+                userVote === "upvote"
+                  ? "bg-teal-600 text-white" 
+                  : "bg-gray-700 hover:bg-teal-500 text-teal-400 hover:text-white"
+              }`}
             >
-              {userVote === "upvote" ? "Upvoted" : "Upvote"}
+              <div className="flex items-center">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-5 w-5 mr-1"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M3.293 9.707a1 1 0 010-1.414l6-6a1 1 0 011.414 0l6 6a1 1 0 01-1.414 1.414L11 5.414V17a1 1 0 11-2 0V5.414L4.707 9.707a1 1 0 01-1.414 0z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+                {userVote === "upvote" ? "Upvoted" : "Upvote"}
+              </div>
             </button>
             <button
               onClick={() => handleVote("downvote")}
-              className={`px-4 py-2 rounded-md ${
-                userVote === "downvote" ? "bg-red-600" : "bg-red-500 hover:bg-red-600"
-              } text-white`}
+              className={`px-4 py-2 rounded-md transition-colors duration-200 ${
+                userVote === "downvote"
+                  ? "bg-red-600 text-white"
+                  : "bg-gray-700 hover:bg-red-500 text-red-400 hover:text-white"
+              }`}
             >
-              {userVote === "downvote" ? "Downvoted" : "Downvote"}
+              <div className="flex items-center">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-5 w-5 mr-1"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M16.707 10.293a1 1 0 010 1.414l-6 6a1 1 0 01-1.414 0l-6-6a1 1 0 111.414-1.414L9 14.586V3a1 1 0 012 0v11.586l4.293-4.293a1 1 0 011.414 0z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+                {userVote === "downvote" ? "Downvoted" : "Downvote"}
+              </div>
             </button>
-            <span className="ml-4 text-teal-300 font-bold text-lg">{post.votes} votes</span>
+            <span className={`ml-4 font-bold text-lg ${
+              post.votes > 0 ? 'text-teal-400' : 
+              post.votes < 0 ? 'text-red-400' : 
+              'text-gray-400'
+            }`}>
+              {post.votes} votes
+            </span>
           </div>
         </div>
+
+        {/* Login Warning */}
+        {loginWarning && (
+          <div className="fixed top-4 right-4 bg-red-500 text-white px-6 py-3 rounded-md shadow-lg animate-fade-in">
+            Please log in to vote
+            <Link href="/login" className="ml-2 underline">
+              Login here
+            </Link>
+          </div>
+        )}
 
         {/* Updated comments section */}
         <div className="mt-8">
           <h3 className="text-xl font-bold mb-4">Comments</h3>
           {comments && comments.length > 0 ? (
-            <div>
-              {comments
-                .filter(comment => !comment.parentCommentId)
-                .map(comment => renderComment(comment))}
-            </div>
+            comments.map((comment, index) => (
+              <div 
+                key={index} 
+                className={`bg-gray-700 p-4 rounded-md mb-4 flex items-start ${
+                  comment.id === post.solutionCommentId ? 'border-2 border-green-500' : ''
+                }`}
+              >
+                <img
+                  src={comment.profilePicture}
+                  alt={`${comment.commenterUsername}'s profile`}
+                  className="w-10 h-10 rounded-full mr-4 object-cover"
+                />
+                <div className="flex-grow">
+                  <div className="flex justify-between items-center">
+                    <Link
+                      href={`/profile/${comment.userId}`}
+                      className="text-teal-400 font-bold hover:underline"
+                    >
+                      {comment.commenterUsername || comment.username}
+                    </Link>
+                    {user && user.id === post.userId && !post.isSolved && (
+                      <button
+                        onClick={() => handleMarkSolution(comment.id)}
+                        className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded-md text-sm"
+                      >
+                        Mark as Solution
+                      </button>
+                    )}
+                  </div>
+                  <p className="text-gray-400">{comment.text}</p>
+                  {comment.id === post.solutionCommentId && (
+                    <div className="mt-2 text-green-500 font-bold">
+                      ✓ Solution
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))
           ) : (
             <p className="text-gray-400">No comments yet. Be the first to comment!</p>
           )}
 
-          {user && !replyingTo && (
+          {user && (
             <div className="mt-6">
               <textarea
                 className="w-full p-2 rounded bg-gray-800 text-white mb-4"
@@ -470,7 +457,7 @@ export default function DetailedPostPage() {
                 placeholder="Add your comment..."
               ></textarea>
               <button
-                onClick={() => handleCommentSubmit()}
+                onClick={handleCommentSubmit}
                 className="bg-teal-500 hover:bg-teal-600 text-white px-4 py-2 rounded-md"
               >
                 Submit Comment
@@ -493,6 +480,16 @@ export default function DetailedPostPage() {
           />
         </div>
       )}
+
+      <style jsx>{`
+        @keyframes fade-in {
+          from { opacity: 0; transform: translateY(-20px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in {
+          animation: fade-in 0.3s ease-out;
+        }
+      `}</style>
     </div>
   );
 }

@@ -20,6 +20,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Service
 public class PostService {
@@ -289,4 +290,50 @@ public class PostService {
         Post updatedPost = postRepo.save(post);
         return toDto(updatedPost);
     }
+
+    @Transactional
+    public PostDto handleVote(Long postId, Long userId, String voteType) {
+        Post post = postRepo.findById(postId)
+                .orElseThrow(() -> new PostNotFoundException(postId));
+
+
+        String currentVote = getUserVote(postId, userId);
+        
+        if (currentVote != null) {
+            if (currentVote.equals(voteType)) {
+                post.setVotes(post.getVotes() + (voteType.equals("upvote") ? -1 : 1));
+                removeUserVote(postId, userId);
+            } else {
+                post.setVotes(post.getVotes() + (voteType.equals("upvote") ? 2 : -2));
+                updateUserVote(postId, userId, voteType);
+            }
+        } else {
+            post.setVotes(post.getVotes() + (voteType.equals("upvote") ? 1 : -1));
+            saveUserVote(postId, userId, voteType);
+        }
+
+        return toDto(postRepo.save(post));
+    }
+
+    public String getUserVote(Long postId, Long userId) {
+        String key = postId + "-" + userId;
+        return userVotes.get(key);
+    }
+
+    private void saveUserVote(Long postId, Long userId, String voteType) {
+        String key = postId + "-" + userId;
+        userVotes.put(key, voteType);
+    }
+
+    private void updateUserVote(Long postId, Long userId, String voteType) {
+        saveUserVote(postId, userId, voteType);
+    }
+
+    private void removeUserVote(Long postId, Long userId) {
+        String key = postId + "-" + userId;
+        userVotes.remove(key);
+    }
+
+    // Add this at class level
+    private static final Map<String, String> userVotes = new ConcurrentHashMap<>();
 }

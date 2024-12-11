@@ -20,6 +20,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
@@ -103,13 +104,25 @@ public class PostController {
     }
 
     @PostMapping("/{id}/upvote")
-    public void upvotePost(@PathVariable Long id) {
-        postService.upvotePost(id);
+    public ResponseEntity<PostDto> upvotePost(@PathVariable Long id, @RequestBody Map<String, Long> payload) {
+        Long userId = payload.get("userId");
+        try {
+            PostDto updatedPost = postService.handleVote(id, userId, "upvote");
+            return ResponseEntity.ok(updatedPost);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().build();
+        }
     }
 
     @PostMapping("/{id}/downvote")
-    public void downvotePost(@PathVariable Long id) {
-        postService.downvotePost(id);
+    public ResponseEntity<PostDto> downvotePost(@PathVariable Long id, @RequestBody Map<String, Long> payload) {
+        Long userId = payload.get("userId");
+        try {
+            PostDto updatedPost = postService.handleVote(id, userId, "downvote");
+            return ResponseEntity.ok(updatedPost);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().build();
+        }
     }
 
     @GetMapping("/user/{userId}")
@@ -137,5 +150,14 @@ public class PostController {
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         }
+    }
+
+    @GetMapping("/{postId}/vote/{userId}")
+    public ResponseEntity<Map<String, String>> getUserVote(
+        @PathVariable Long postId,
+        @PathVariable Long userId
+    ) {
+        String voteType = postService.getUserVote(postId, userId);
+        return ResponseEntity.ok(Map.of("voteType", voteType != null ? voteType : ""));
     }
 }

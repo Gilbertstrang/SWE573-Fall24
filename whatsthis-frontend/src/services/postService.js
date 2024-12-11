@@ -35,33 +35,9 @@ const createPost = async (formData) => {
   }
 };
 
-const upvotePost = async (id) => {
-  try {
-    const response = await axiosInstance.post(`/posts/${id}/upvote`);
-    return response.data;
-  } catch (error) {
-    console.error('Error upvoting post:', error);
-    throw error;
-  }
-};
-
-const downvotePost = async (id) => {
-  try {
-    const response = await axiosInstance.post(`/posts/${id}/downvote`);
-    return response.data;
-  } catch (error) {
-    console.error('Error downvoting post:', error);
-    throw error;
-  }
-};
-
-
 const votePost = async (postId, userId, voteType) => {
   try {
-    const response = await axiosInstance.post(`/posts/${postId}/votes`, {
-      userId,
-      voteType, 
-    });
+    const response = await axiosInstance.post(`/posts/${postId}/${voteType}`, { userId });
     return response.data;
   } catch (error) {
     console.error(`Error ${voteType}ing post:`, error);
@@ -69,24 +45,13 @@ const votePost = async (postId, userId, voteType) => {
   }
 };
 
-
-const cancelVote = async (postId, userId) => {
-  try {
-    const response = await axiosInstance.delete(`/posts/${postId}/votes/${userId}`);
-    return response.data;
-  } catch (error) {
-    console.error('Error canceling vote:', error);
-    throw error;
-  }
-};
-
 const getUserVote = async (postId, userId) => {
   try {
-    const response = await axiosInstance.get(`/posts/${postId}/votes/${userId}`);
-    return response.data.voteType; 
+    const response = await axiosInstance.get(`/posts/${postId}/vote/${userId}`);
+    return response.data.voteType;
   } catch (error) {
-    console.error('Error fetching user vote:', error);
-    throw error;
+    console.error('Error getting user vote:', error);
+    return null;
   }
 };
 
@@ -94,9 +59,6 @@ export default {
   getAllPosts,
   getPostById,
   createPost,
-  upvotePost,
-  downvotePost,
   votePost,
-  cancelVote,
   getUserVote,
 };
