@@ -27,14 +27,9 @@ export default function Layout({ children }) {
       <body className="bg-gray-900 text-white min-h-screen">
         <UserProvider>
           <NavigationBar onOpenLogin={openLoginModal} onOpenSignup={openSignupModal} />
-
-          {/* Render Login Modal if open */}
           {isLoginOpen && <LoginModal onClose={closeLoginModal} />}
-
-          {/* Render Signup Modal if open */}
           {isSignupOpen && <SignupModal onClose={closeSignupModal} />}
 
-          {/* Render the rest of the content */}
           <main>{children}</main>
         </UserProvider>
       </body>

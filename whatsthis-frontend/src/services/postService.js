@@ -55,10 +55,26 @@ const getUserVote = async (postId, userId) => {
   }
 };
 
+const searchPosts = async (searchParams) => {
+  try {
+    const queryString = Object.entries(searchParams)
+      .filter(([_, value]) => value !== '' && value !== false)
+      .map(([key, value]) => `${key}=${encodeURIComponent(value)}`)
+      .join('&');
+
+    const response = await axiosInstance.get(`/posts/search?${queryString}`);
+    return response.data;
+  } catch (error) {
+    console.error('Error searching posts:', error);
+    throw error;
+  }
+};
+
 export default {
   getAllPosts,
   getPostById,
   createPost,
   votePost,
   getUserVote,
+  searchPosts,
 };

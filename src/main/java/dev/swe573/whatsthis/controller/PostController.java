@@ -160,4 +160,10 @@ public class PostController {
         String voteType = postService.getUserVote(postId, userId);
         return ResponseEntity.ok(Map.of("voteType", voteType != null ? voteType : ""));
     }
+
+    @GetMapping("/search")
+    public ResponseEntity<List<PostDto>> searchPosts(@RequestParam Map<String, String> searchParams) {
+        List<PostDto> results = postService.searchPosts(searchParams);
+        return ResponseEntity.ok(results);
+    }
 }

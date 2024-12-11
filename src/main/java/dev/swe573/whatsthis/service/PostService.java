@@ -21,6 +21,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Stream;
 
 @Service
 public class PostService {
@@ -125,7 +126,7 @@ public class PostService {
                     part.setHardness(partDto.getHardness());
                     part.setPattern(partDto.getPattern());
                     part.setBrand(partDto.getBrand());
-                    part.setPrint(partDto.getPrint());
+                    partDto.setPrint(partDto.getPrint());
                     part.setIcons(partDto.getIcons());
                     part.setHandmade(partDto.getHandmade());
                     part.setFunctionality(partDto.getFunctionality());
@@ -336,4 +337,53 @@ public class PostService {
 
     // Add this at class level
     private static final Map<String, String> userVotes = new ConcurrentHashMap<>();
+
+    public List<PostDto> searchPosts(Map<String, String> searchParams) {
+        return postRepo.findAll().stream()
+            .filter(post -> matchesSearchCriteria(post, searchParams))
+            .map(this::toDto)
+            .collect(Collectors.toList());
+    }
+
+    private boolean matchesSearchCriteria(Post post, Map<String, String> params) {
+        // Basic text search
+        if (params.containsKey("query") && !params.get("query").isEmpty()) {
+            String query = params.get("query").toLowerCase();
+            boolean matchesBasicSearch = post.getTitle().toLowerCase().contains(query) ||
+                post.getDescription().toLowerCase().contains(query);
+            if (!matchesBasicSearch) return false;
+        }
+
+        // Material
+        if (params.containsKey("material") && !params.get("material").isEmpty()) {
+            if (!params.get("material").equals(post.getMaterial())) return false;
+        }
+
+        // Color
+        if (params.containsKey("color") && !params.get("color").isEmpty()) {
+            if (!params.get("color").equals(post.getColor())) return false;
+        }
+
+        // Shape
+        if (params.containsKey("shape") && !params.get("shape").isEmpty()) {
+            if (!params.get("shape").equals(post.getShape())) return false;
+        }
+
+        // Time Period
+        if (params.containsKey("timePeriod") && !params.get("timePeriod").isEmpty()) {
+            if (!params.get("timePeriod").equals(post.getTimePeriod())) return false;
+        }
+
+        // Pattern
+        if (params.containsKey("pattern") && !params.get("pattern").isEmpty()) {
+            if (!params.get("pattern").equals(post.getPattern())) return false;
+        }
+
+        // Handmade
+        if (params.containsKey("handmade") && params.get("handmade").equals("true")) {
+            if (!Boolean.TRUE.equals(post.getHandmade())) return false;
+        }
+
+        return true;
+    }
 }
