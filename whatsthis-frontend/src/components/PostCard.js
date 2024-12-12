@@ -26,6 +26,11 @@ const PostCard = ({ post }) => {
       .catch((error) => console.error("Failed to fetch comment count:", error));
   }, [post.username, post.userId, post.id]);
 
+  const formatVotes = (votes) => {
+    if (votes === 0) return "0";
+    return votes > 0 ? `+${votes}` : `${votes}`;
+  };
+
   return (
     <Link href={`/posts/${post.id}`} passHref>
       <div className="bg-gray-800 text-white rounded-lg shadow-lg overflow-hidden cursor-pointer transform transition-transform duration-300 hover:scale-105 w-full h-[500px] flex flex-col relative">
@@ -94,10 +99,40 @@ const PostCard = ({ post }) => {
           )}
 
           {/* Votes and Comments */}
-          <div className="flex justify-between items-center mt-auto">
-            <span className="text-teal-400 font-bold text-sm">
-              {post.votes} {post.votes === 1 ? "Vote" : "Votes"}
-            </span>
+          <div className="flex justify-between items-center mt-auto px-4 pb-4">
+            <div className="flex items-center gap-1 -ml-1">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-3 w-3 text-gray-500"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M3.293 9.707a1 1 0 010-1.414l6-6a1 1 0 011.414 0l6 6a1 1 0 01-1.414 1.414L11 5.414V17a1 1 0 11-2 0V5.414L4.707 9.707a1 1 0 01-1.414 0z"
+                  clipRule="evenodd"
+                />
+              </svg>
+              <span className={`font-bold text-sm ${
+                post.votes > 0 ? 'text-teal-400' : 
+                post.votes < 0 ? 'text-red-400' : 
+                'text-gray-400'
+              }`}>
+                {formatVotes(post.votes)}
+              </span>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-3 w-3 text-gray-500"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M16.707 10.293a1 1 0 010 1.414l-6 6a1 1 0 01-1.414 0l-6-6a1 1 0 111.414-1.414L9 14.586V3a1 1 0 012 0v11.586l4.293-4.293a1 1 0 011.414 0z"
+                  clipRule="evenodd"
+                />
+              </svg>
+            </div>
             <span className="text-gray-400 font-bold text-sm">
               {commentCount} {commentCount === 1 ? "Comment" : "Comments"}
             </span>

@@ -192,6 +192,11 @@ export default function DetailedPostPage() {
       ));
   };
 
+  const formatVotes = (votes) => {
+    if (votes === 0) return "0";
+    return votes > 0 ? `+${votes}` : `${votes}`;
+  };
+
   return (
     <div className="container mx-auto p-6 bg-gray-900 text-white min-h-screen">
       <div className="max-w-4xl mx-auto bg-gray-800 p-6 rounded-lg shadow-md">
@@ -332,62 +337,60 @@ export default function DetailedPostPage() {
 
         {/* Votes */}
         <div className="mt-8">
-          <div className="flex items-center">
+          <div className="flex items-center gap-6">
             <button
               onClick={() => handleVote("upvote")}
-              className={`px-4 py-2 rounded-md mr-4 transition-colors duration-200 ${
+              className={`p-2 rounded-md transition-colors duration-200 ${
                 userVote === "upvote"
                   ? "bg-teal-600 text-white" 
                   : "bg-gray-700 hover:bg-teal-500 text-teal-400 hover:text-white"
               }`}
             >
-              <div className="flex items-center">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-5 w-5 mr-1"
-                  viewBox="0 0 20 20"
-                  fill="currentColor"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M3.293 9.707a1 1 0 010-1.414l6-6a1 1 0 011.414 0l6 6a1 1 0 01-1.414 1.414L11 5.414V17a1 1 0 11-2 0V5.414L4.707 9.707a1 1 0 01-1.414 0z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-                {userVote === "upvote" ? "Upvoted" : "Upvote"}
-              </div>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-6 w-6"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M3.293 9.707a1 1 0 010-1.414l6-6a1 1 0 011.414 0l6 6a1 1 0 01-1.414 1.414L11 5.414V17a1 1 0 11-2 0V5.414L4.707 9.707a1 1 0 01-1.414 0z"
+                  clipRule="evenodd"
+                />
+              </svg>
             </button>
+            
+            <div className="min-w-[50px] text-center">
+              <span className={`text-xl font-bold ${
+                post.votes > 0 ? 'text-teal-400' : 
+                post.votes < 0 ? 'text-red-400' : 
+                'text-gray-400'
+              }`}>
+                {formatVotes(post.votes)}
+              </span>
+            </div>
+
             <button
               onClick={() => handleVote("downvote")}
-              className={`px-4 py-2 rounded-md transition-colors duration-200 ${
+              className={`p-2 rounded-md transition-colors duration-200 ${
                 userVote === "downvote"
                   ? "bg-red-600 text-white"
                   : "bg-gray-700 hover:bg-red-500 text-red-400 hover:text-white"
               }`}
             >
-              <div className="flex items-center">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-5 w-5 mr-1"
-                  viewBox="0 0 20 20"
-                  fill="currentColor"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M16.707 10.293a1 1 0 010 1.414l-6 6a1 1 0 01-1.414 0l-6-6a1 1 0 111.414-1.414L9 14.586V3a1 1 0 012 0v11.586l4.293-4.293a1 1 0 011.414 0z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-                {userVote === "downvote" ? "Downvoted" : "Downvote"}
-              </div>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-6 w-6"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M16.707 10.293a1 1 0 010 1.414l-6 6a1 1 0 01-1.414 0l-6-6a1 1 0 111.414-1.414L9 14.586V3a1 1 0 012 0v11.586l4.293-4.293a1 1 0 011.414 0z"
+                  clipRule="evenodd"
+                />
+              </svg>
             </button>
-            <span className={`ml-4 font-bold text-lg ${
-              post.votes > 0 ? 'text-teal-400' : 
-              post.votes < 0 ? 'text-red-400' : 
-              'text-gray-400'
-            }`}>
-              {post.votes} votes
-            </span>
           </div>
         </div>
 

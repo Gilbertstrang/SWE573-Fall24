@@ -19,7 +19,7 @@ const CreatePostPage = () => {
     shape: "",
     weightValue: "",
     weightUnit: "kg",
-    descriptionOfParts: "",
+    price: "",
     location: "",
     timePeriod: "",
     smell: "",
@@ -37,13 +37,107 @@ const CreatePostPage = () => {
   });
 
   
-  const predefinedShapes = ["Round", "Square", "Rectangle", "Triangle", "Oval", "Hexagon", "Irregular"];
-  const predefinedMaterials = ["Plastic", "Metal", "Wood", "Glass", "Fabric", "Paper"];
-  const predefinedColors = ["Red", "Green", "Blue", "Black", "White", "Yellow", "Purple", "Brown"];
-  const predefinedPatterns = ["Striped", "Polka Dot", "Plaid", "Solid", "Abstract", "Geometric"];
-  const predefinedTimePeriods = ["19th Century", "20th Century", "21st Century", "Ancient"];
-  const predefinedHardness = ["Soft", "Medium", "Hard"];
-  const predefinedFunctions = ["Decorative", "Functional", "Both"];
+  const predefinedShapes = [
+    "Round/Circle", 
+    "Square/Box", 
+    "Rectangle/Long Box", 
+    "Triangle", 
+    "Oval/Egg-shaped",
+    "Ball/Sphere",
+    "Cylinder/Tube",
+    "Cone/Triangle 3D",
+    "Star",
+    "Heart",
+    "Cross",
+    "Irregular/Random"
+  ];
+
+  const predefinedMaterials = [
+    "Plastic",
+    "Metal (General)",
+    "Wood",
+    "Glass",
+    "Fabric/Cloth",
+    "Paper/Cardboard",
+    "Gold/Gold-colored",
+    "Silver/Silver-colored",
+    "Copper/Bronze",
+    "Stone/Rock",
+    "Leather",
+    "Rubber",
+    "Clay/Ceramic",
+    "Foam",
+    "Carbon Fiber"
+  ];
+
+  const predefinedColors = [
+    "Red",
+    "Blue",
+    "Green",
+    "Yellow",
+    "Purple",
+    "Orange",
+    "Pink",
+    "Black",
+    "White",
+    "Gray",
+    "Brown",
+    "Beige/Tan",
+    "Gold-colored",
+    "Silver-colored",
+    "Bronze-colored",
+    "Multi-colored"
+  ];
+
+  const predefinedPatterns = [
+    "Plain/Solid Color",
+    "Stripes",
+    "Dots",
+    "Squares/Checkered",
+    "Floral/Flowers",
+    "Animal Print",
+    "Abstract/Random",
+    "Geometric Shapes",
+    "Camouflage",
+    "Nature/Landscape",
+    "Text/Letters",
+    "No Pattern"
+  ];
+
+  const predefinedTimePeriods = [
+    "Very Old (100+ years)",
+    "Old (50-100 years)",
+    "Recent (10-50 years)",
+    "New (0-10 years)",
+    "Not Sure",
+    "1800s",
+    "1900-1950",
+    "1950-2000",
+    "2000-Present"
+  ];
+
+  const predefinedHardness = [
+    "Very Soft (like cotton)",
+    "Soft (like rubber)",
+    "Medium (like wood)",
+    "Hard (like metal)",
+    "Very Hard (like diamond)",
+    "Flexible/Bendable"
+  ];
+
+  const predefinedFunctions = [
+    "Decoration Only",
+    "Tool/Useful Object",
+    "Both Decoration and Tool",
+    "Container/Storage",
+    "Clothing/Wearable",
+    "Furniture/Home Item",
+    "Kitchen/Cooking",
+    "Game/Toy",
+    "Machine Part",
+    "Not Sure"
+  ];
+
   const sizeUnits = ["cm", "in", "mm", "m"];
   const weightUnits = ["kg", "g", "lb", "oz"];
 
@@ -65,7 +159,7 @@ const CreatePostPage = () => {
     color: "",
     shape: "",
     weight: "",
-    descriptionOfParts: "",
+    price: "",
     location: "",
     timePeriod: "",
     smell: "",
@@ -195,7 +289,7 @@ const CreatePostPage = () => {
       color: part.color,
       shape: part.shape,
       weight: `${part.weightValue || ''} ${part.weightUnit || ''}`.trim(),
-      descriptionOfParts: part.descriptionOfParts,
+      price: part.price,
       location: part.location,
       timePeriod: part.timePeriod,
       smell: part.smell,
@@ -244,6 +338,30 @@ const CreatePostPage = () => {
     }
   };
 
+  const renderComboBox = ({ name, options, label, value, onChange }) => (
+    <div>
+      <label className="block text-lg font-semibold mb-2">
+        {label}
+      </label>
+      <div className="relative">
+        <input
+          type="text"
+          name={name}
+          value={value}
+          onChange={onChange}
+          list={`${name}-options`}
+          className="w-full px-4 py-3 rounded-lg bg-gray-600 text-white focus:outline-none focus:ring-2 focus:ring-teal-500"
+          placeholder={`Enter or select ${label.toLowerCase()}`}
+        />
+        <datalist id={`${name}-options`}>
+          {options.map((option) => (
+            <option key={option} value={option} />
+          ))}
+        </datalist>
+      </div>
+    </div>
+  );
+
   return (
     <div className="min-h-screen flex flex-col bg-gray-900 text-white">
       <div className="container mx-auto py-8">
@@ -272,7 +390,7 @@ const CreatePostPage = () => {
                   value={formData.title}
                   onChange={handleInputChange}
                   className="w-full px-4 py-3 rounded-lg bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-teal-500"
-                  placeholder="Enter title"
+                  placeholder="Enter a descriptive title"
                   required
                 />
               </div>
@@ -288,7 +406,7 @@ const CreatePostPage = () => {
                   onChange={handleInputChange}
                   className="w-full px-4 py-3 rounded-lg bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-teal-500"
                   rows={3}
-                  placeholder="Describe your mystery post"
+                  placeholder="Describe your mystery item.  What's the story behind it?"
                 ></textarea>
               </div>
             </div>
@@ -362,24 +480,15 @@ const CreatePostPage = () => {
                           { name: "material", options: predefinedMaterials, label: "Material" },
                           { name: "color", options: predefinedColors, label: "Color" },
                           { name: "shape", options: predefinedShapes, label: "Shape" },
-                        ].map(({ name, options, label }) => (
-                          <div key={name}>
-                            <label className="block text-lg font-semibold mb-2">
-                              {label}
-                            </label>
-                            <select
-                              name={name}
-                              value={formData[name]}
-                              onChange={handleInputChange}
-                              className="w-full px-4 py-3 rounded-lg bg-gray-600 text-white focus:outline-none focus:ring-2 focus:ring-teal-500"
-                            >
-                              <option value="">Select {label.toLowerCase()}</option>
-                              {options.map((option) => (
-                                <option key={option} value={option}>
-                                  {option}
-                                </option>
-                              ))}
-                            </select>
+                        ].map((field) => (
+                          <div key={field.name}>
+                            {renderComboBox({
+                              name: field.name,
+                              options: field.options,
+                              label: field.label,
+                              value: formData[field.name],
+                              onChange: handleInputChange
+                            })}
                           </div>
                         ))}
 
@@ -406,28 +515,19 @@ const CreatePostPage = () => {
                           { name: "pattern", options: predefinedPatterns, label: "Pattern" },
                           { name: "timePeriod", options: predefinedTimePeriods, label: "Time Period" },
                           { name: "hardness", options: predefinedHardness, label: "Hardness" },
-                        ].map(({ name, options, label }) => (
-                          <div key={name}>
-                            <label className="block text-lg font-semibold mb-2">
-                              {label}
-                            </label>
-                            <select
-                              name={name}
-                              value={formData[name]}
-                              onChange={handleInputChange}
-                              className="w-full px-4 py-3 rounded-lg bg-gray-600 text-white focus:outline-none focus:ring-2 focus:ring-teal-500"
-                            >
-                              <option value="">Select {label.toLowerCase()}</option>
-                              {options.map((option) => (
-                                <option key={option} value={option}>
-                                  {option}
-                                </option>
-                              ))}
-                            </select>
+                        ].map((field) => (
+                          <div key={field.name}>
+                            {renderComboBox({
+                              name: field.name,
+                              options: field.options,
+                              label: field.label,
+                              value: formData[field.name],
+                              onChange: handleInputChange
+                            })}
                           </div>
                         ))}
 
-                        {["taste", "texture", "descriptionOfParts"].map((field) => (
+                        {["taste", "texture", "price"].map((field) => (
                           <div key={field}>
                             <label className="block text-lg font-semibold mb-2 capitalize">
                               {field.replace(/([A-Z])/g, " $1")}
@@ -561,7 +661,7 @@ const CreatePostPage = () => {
                           </div>
                         ))}
 
-                        {["taste", "texture", "descriptionOfParts"].map((field) => (
+                        {["taste", "texture", "price"].map((field) => (
                           <div key={field}>
                             <label className="block text-lg font-semibold mb-2 capitalize">
                               {field.replace(/([A-Z])/g, " $1")}

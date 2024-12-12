@@ -117,7 +117,7 @@ public class PostService {
                     part.setColor(partDto.getColor());
                     part.setShape(partDto.getShape());
                     part.setWeight(partDto.getWeight());
-                    part.setDescriptionOfParts(partDto.getDescriptionOfParts());
+                    part.setPrice(partDto.getPrice());
                     part.setLocation(partDto.getLocation());
                     part.setTimePeriod(partDto.getTimePeriod());
                     part.setSmell(partDto.getSmell());
@@ -191,7 +191,7 @@ public class PostService {
                     partDto.setColor(part.getColor());
                     partDto.setShape(part.getShape());
                     partDto.setWeight(part.getWeight());
-                    partDto.setDescriptionOfParts(part.getDescriptionOfParts());
+                    partDto.setPrice(part.getPrice());
                     partDto.setLocation(part.getLocation());
                     partDto.setTimePeriod(part.getTimePeriod());
                     partDto.setSmell(part.getSmell());
@@ -248,6 +248,7 @@ public class PostService {
         existingPost.setTimePeriod(postDto.getTimePeriod());
         existingPost.setHandmade(postDto.getHandmade());
         existingPost.setFunctionality(postDto.getFunctionality());
+        existingPost.setPrice(postDto.getPrice());
 
         existingPost = postRepo.save(existingPost);
         return toDto(existingPost);

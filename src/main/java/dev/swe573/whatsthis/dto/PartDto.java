@@ -11,7 +11,7 @@ public class PartDto {
     private String color;
     private String shape;
     private String weight;
-    private String descriptionOfParts;
+    private String price;
     private String location;
     private String timePeriod;
     private String smell;

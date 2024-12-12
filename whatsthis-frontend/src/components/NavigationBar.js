@@ -32,13 +32,93 @@ function NavigationBar({ onOpenLogin, onOpenSignup, onSearch }) {
     handmade: false,
   });
 
-  const predefinedShapes = ["Round", "Square", "Rectangle", "Triangle", "Oval", "Hexagon", "Irregular"];
-  const predefinedMaterials = ["Plastic", "Metal", "Wood", "Glass", "Fabric", "Paper"];
-  const predefinedColors = ["Red", "Green", "Blue", "Black", "White", "Yellow", "Purple", "Brown"];
-  const predefinedPatterns = ["Striped", "Polka Dot", "Plaid", "Solid", "Abstract", "Geometric"];
-  const predefinedTimePeriods = ["19th Century", "20th Century", "21st Century", "Ancient"];
-  const predefinedHardness = ["Soft", "Medium", "Hard"];
-  const predefinedFunctions = ["Decorative", "Functional", "Both"];
+  const predefinedShapes = [
+    "Round/Circle", 
+    "Square/Box", 
+    "Rectangle/Long Box", 
+    "Triangle", 
+    "Oval/Egg-shaped",
+    "Ball/Sphere",
+    "Cylinder/Tube",
+    "Cone/Triangle 3D",
+    "Star",
+    "Heart",
+    "Cross",
+    "Irregular/Random"
+  ];
+
+  const predefinedMaterials = [
+    "Plastic",
+    "Metal (General)",
+    "Wood",
+    "Glass",
+    "Fabric/Cloth",
+    "Paper/Cardboard",
+    "Gold/Gold-colored",
+    "Silver/Silver-colored",
+    "Copper/Bronze",
+    "Stone/Rock",
+    "Leather",
+    "Rubber",
+    "Clay/Ceramic",
+    "Foam",
+    "Carbon Fiber"
+  ];
+
+  const predefinedColors = [
+    "Red", "Blue", "Green", "Yellow",
+    "Purple", "Orange", "Pink",
+    "Black", "White", "Gray",
+    "Brown", "Beige/Tan",
+    "Gold-colored", "Silver-colored",
+    "Bronze-colored", "Multi-colored"
+  ];
+
+  const predefinedPatterns = [
+    "Plain/Solid Color",
+    "Stripes", "Dots",
+    "Squares/Checkered",
+    "Floral/Flowers",
+    "Animal Print",
+    "Abstract/Random",
+    "Geometric Shapes",
+    "Camouflage",
+    "Nature/Landscape",
+    "Text/Letters",
+    "No Pattern"
+  ];
+
+  const predefinedTimePeriods = [
+    "Very Old (100+ years)",
+    "Old (50-100 years)",
+    "Recent (10-50 years)",
+    "New (0-10 years)",
+    "Not Sure",
+    "1800s", "1900-1950",
+    "1950-2000", "2000-Present"
+  ];
+
+  const predefinedHardness = [
+    "Very Soft (like cotton)",
+    "Soft (like rubber)",
+    "Medium (like wood)",
+    "Hard (like metal)",
+    "Very Hard (like diamond)",
+    "Flexible/Bendable"
+  ];
+
+  const predefinedFunctions = [
+    "Decoration Only",
+    "Tool/Useful Object",
+    "Both Decoration and Tool",
+    "Container/Storage",
+    "Clothing/Wearable",
+    "Furniture/Home Item",
+    "Kitchen/Cooking",
+    "Game/Toy",
+    "Machine Part",
+    "Not Sure"
+  ];
 
   const handleSearchParamChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -71,6 +151,28 @@ function NavigationBar({ onOpenLogin, onOpenSignup, onSearch }) {
       onSearch({});
     }
   };
+
+  const renderComboBox = ({ name, options, label, value, onChange }) => (
+    <div>
+      <label className="block text-sm text-gray-300 mb-1">{label}</label>
+      <div className="relative">
+        <input
+          type="text"
+          name={name}
+          value={value}
+          onChange={onChange}
+          list={`search-${name}-options`}
+          className="w-full bg-gray-700 text-white rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-teal-500"
+          placeholder={`Any ${label}`}
+        />
+        <datalist id={`search-${name}-options`}>
+          {options.map((option) => (
+            <option key={option} value={option} />
+          ))}
+        </datalist>
+      </div>
+    </div>
+  );
 
   return (
     <nav className="bg-gray-800 p-4">
@@ -115,117 +217,49 @@ function NavigationBar({ onOpenLogin, onOpenSignup, onSearch }) {
                   <h3 className="text-white text-lg font-semibold mb-4">Advanced Search Options</h3>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div className="space-y-4">
-                      
-                      <div>
-                        <label className="block text-sm text-gray-300 mb-1">Material</label>
-                        <select
-                          name="material"
-                          value={searchParams.material}
-                          onChange={handleSearchParamChange}
-                          className="w-full bg-gray-700 text-white rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-teal-500"
-                        >
-                          <option value="">Any Material</option>
-                          {predefinedMaterials.map(material => (
-                            <option key={material} value={material}>{material}</option>
-                          ))}
-                        </select>
-                      </div>
-
-                      <div>
-                        <label className="block text-sm text-gray-300 mb-1">Color</label>
-                        <select
-                          name="color"
-                          value={searchParams.color}
-                          onChange={handleSearchParamChange}
-                          className="w-full bg-gray-700 text-white rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-teal-500"
-                        >
-                          <option value="">Any Color</option>
-                          {predefinedColors.map(color => (
-                            <option key={color} value={color}>{color}</option>
-                          ))}
-                        </select>
-                      </div>
-
-                      <div>
-                        <label className="block text-sm text-gray-300 mb-1">Shape</label>
-                        <select
-                          name="shape"
-                          value={searchParams.shape}
-                          onChange={handleSearchParamChange}
-                          className="w-full bg-gray-700 text-white rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-teal-500"
-                        >
-                          <option value="">Any Shape</option>
-                          {predefinedShapes.map(shape => (
-                            <option key={shape} value={shape}>{shape}</option>
-                          ))}
-                        </select>
-                      </div>
+                      {[
+                        { name: "material", options: predefinedMaterials, label: "Material" },
+                        { name: "color", options: predefinedColors, label: "Color" },
+                        { name: "shape", options: predefinedShapes, label: "Shape" },
+                      ].map((field) => (
+                        <div key={field.name}>
+                          {renderComboBox({
+                            name: field.name,
+                            options: field.options,
+                            label: field.label,
+                            value: searchParams[field.name],
+                            onChange: handleSearchParamChange
+                          })}
+                        </div>
+                      ))}
                     </div>
 
                     <div className="space-y-4">
-                      
-                      <div>
-                        <label className="block text-sm text-gray-300 mb-1">Pattern</label>
-                        <select
-                          name="pattern"
-                          value={searchParams.pattern}
-                          onChange={handleSearchParamChange}
-                          className="w-full bg-gray-700 text-white rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-teal-500"
-                        >
-                          <option value="">Any Pattern</option>
-                          {predefinedPatterns.map(pattern => (
-                            <option key={pattern} value={pattern}>{pattern}</option>
-                          ))}
-                        </select>
-                      </div>
-
-                      <div>
-                        <label className="block text-sm text-gray-300 mb-1">Hardness</label>
-                        <select
-                          name="hardness"
-                          value={searchParams.hardness}
-                          onChange={handleSearchParamChange}
-                          className="w-full bg-gray-700 text-white rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-teal-500"
-                        >
-                          <option value="">Any Hardness</option>
-                          {predefinedHardness.map(hardness => (
-                            <option key={hardness} value={hardness}>{hardness}</option>
-                          ))}
-                        </select>
-                      </div>
-
-                      <div>
-                        <label className="block text-sm text-gray-300 mb-1">Function</label>
-                        <select
-                          name="functionality"
-                          value={searchParams.functionality}
-                          onChange={handleSearchParamChange}
-                          className="w-full bg-gray-700 text-white rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-teal-500"
-                        >
-                          <option value="">Any Function</option>
-                          {predefinedFunctions.map(func => (
-                            <option key={func} value={func}>{func}</option>
-                          ))}
-                        </select>
-                      </div>
+                      {[
+                        { name: "pattern", options: predefinedPatterns, label: "Pattern" },
+                        { name: "hardness", options: predefinedHardness, label: "Hardness" },
+                        { name: "functionality", options: predefinedFunctions, label: "Function" },
+                      ].map((field) => (
+                        <div key={field.name}>
+                          {renderComboBox({
+                            name: field.name,
+                            options: field.options,
+                            label: field.label,
+                            value: searchParams[field.name],
+                            onChange: handleSearchParamChange
+                          })}
+                        </div>
+                      ))}
                     </div>
 
                     <div className="space-y-4">
-                      
-                      <div>
-                        <label className="block text-sm text-gray-300 mb-1">Time Period</label>
-                        <select
-                          name="timePeriod"
-                          value={searchParams.timePeriod}
-                          onChange={handleSearchParamChange}
-                          className="w-full bg-gray-700 text-white rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-teal-500"
-                        >
-                          <option value="">Any Time Period</option>
-                          {predefinedTimePeriods.map(period => (
-                            <option key={period} value={period}>{period}</option>
-                          ))}
-                        </select>
-                      </div>
+                      {renderComboBox({
+                        name: "timePeriod",
+                        options: predefinedTimePeriods,
+                        label: "Time Period",
+                        value: searchParams.timePeriod,
+                        onChange: handleSearchParamChange
+                      })}
 
                       <div className="mt-4">
                         <label className="flex items-center space-x-2 text-gray-300">
