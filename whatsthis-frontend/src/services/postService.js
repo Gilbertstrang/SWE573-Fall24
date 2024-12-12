@@ -70,6 +70,20 @@ const searchPosts = async (searchParams) => {
   }
 };
 
+const toggleSolution = async (postId, commentId, isRemoving) => {
+  try {
+    const endpoint = isRemoving 
+      ? `/posts/${postId}/solution/remove`
+      : `/posts/${postId}/solution/${commentId}`;
+    
+    const response = await axiosInstance.post(endpoint);
+    return response.data;
+  } catch (error) {
+    console.error('Error toggling solution:', error);
+    throw error;
+  }
+};
+
 export default {
   getAllPosts,
   getPostById,
@@ -77,4 +91,5 @@ export default {
   votePost,
   getUserVote,
   searchPosts,
+  toggleSolution,
 };

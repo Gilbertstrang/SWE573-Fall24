@@ -30,8 +30,22 @@ export const getUserComments = async (userId) => {
   }
 };
 
+export const toggleSolution = async (postId, commentId, isRemoving) => {
+  try {
+    const endpoint = `/posts/${postId}/solution`;
+    const params = isRemoving ? { action: 'remove' } : { commentId };
+    
+    const response = await axiosInstance.post(endpoint, params);
+    return response.data;
+  } catch (error) {
+    console.error('Error toggling solution:', error);
+    throw error;
+  }
+};
+
 export default {
   getCommentsByPostId,
   addComment,
   getUserComments,
+  toggleSolution,
 };

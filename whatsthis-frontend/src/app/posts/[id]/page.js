@@ -23,6 +23,8 @@ export default function DetailedPostPage() {
   const [fullscreenImage, setFullscreenImage] = useState(null);
   const [activeTab, setActiveTab] = useState("details");
   const [loginWarning, setLoginWarning] = useState(false);
+  const [replyingTo, setReplyingTo] = useState(null);
+  const [replyText, setReplyText] = useState("");
 
   useEffect(() => {
     const fetchPostAndComments = async () => {
@@ -100,8 +102,10 @@ export default function DetailedPostPage() {
     }
   };
 
-  const handleCommentSubmit = async () => {
-    if (!newComment.trim()) {
+  const handleCommentSubmit = async (parentCommentId = null, text = null) => {
+    const commentText = text || newComment;
+    
+    if (!commentText.trim()) {
       setError("Comment cannot be empty.");
       return;
     }
@@ -112,24 +116,26 @@ export default function DetailedPostPage() {
     }
 
     const commentData = {
-      text: newComment,
+      text: commentText.trim(),
       userId: user.id,
-      postId: post.id,
       username: user.username,
-      votes: 0,
+      postId: parseInt(post.id),
+      parentCommentId: parentCommentId ? parseInt(parentCommentId) : null
     };
 
     try {
       const comment = await commentService.addComment(commentData);
-      setComments((prev) => [
-        ...prev,
-        {
-          ...comment,
-          commenterUsername: user.username,
-          profilePicture: user.profilePicture || "/default-avatar.png",
-        },
-      ]);
-      setNewComment("");
+      setComments(prev => [...prev, {
+        ...comment,
+        commenterUsername: user.username,
+        profilePicture: user.profilePicture || "https://www.gravatar.com/avatar/default?d=mp",
+      }]);
+      if (parentCommentId) {
+        setReplyText("");
+        setReplyingTo(null);
+      } else {
+        setNewComment("");
+      }
     } catch (error) {
       console.error("Error submitting comment:", error);
       setError("Failed to submit comment. Please try again.");
@@ -150,15 +156,16 @@ export default function DetailedPostPage() {
     }
 
     try {
-      const response = await fetch(
-        `http://localhost:8080/api/posts/${post.id}/solution/${commentId}`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        }
-      );
+      const endpoint = commentId === post.solutionCommentId
+        ? `http://localhost:8080/api/posts/${post.id}/solution/remove`
+        : `http://localhost:8080/api/posts/${post.id}/solution/${commentId}`;
+
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
 
       if (response.ok) {
         const updatedPost = await response.json();
@@ -170,6 +177,141 @@ export default function DetailedPostPage() {
     } catch (error) {
       console.error('Error marking solution:', error);
     }
+  };
+
+  const renderComment = (comment, level = 0) => {
+    const replies = comments.filter(c => c.parentCommentId === comment.id);
+    
+    return (
+      <div key={comment.id} style={{ marginLeft: `${level * 20}px` }}>
+        <div 
+          className={`bg-gray-700 p-4 rounded-md mb-2 flex flex-col ${
+            comment.id === post.solutionCommentId ? 'border-2 border-green-500' : ''
+          }`}
+        >
+          {/* Header with profile picture and username */}
+          <div className="flex items-start mb-3">
+            <img
+              src={comment.profilePicture}
+              alt={`${comment.commenterUsername}'s profile`}
+              className="w-10 h-10 rounded-full mr-4 object-cover"
+            />
+            <div className="flex-grow">
+              <div className="flex justify-between items-center">
+                <Link
+                  href={`/profile/${comment.userId}`}
+                  className="text-teal-400 font-bold hover:underline"
+                >
+                  {comment.commenterUsername || comment.username}
+                </Link>
+                {user && user.id === post.userId && !post.isSolved && (
+                  comment.id === post.solutionCommentId ? (
+                    <div className="bg-green-700 text-white px-3 py-1 rounded-md text-sm flex items-center gap-1">
+                      <svg 
+                        xmlns="http://www.w3.org/2000/svg" 
+                        className="h-4 w-4" 
+                        viewBox="0 0 20 20" 
+                        fill="currentColor"
+                      >
+                        <path 
+                          fillRule="evenodd" 
+                          d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" 
+                          clipRule="evenodd" 
+                        />
+                      </svg>
+                      Marked as Solution
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => handleMarkSolution(comment.id)}
+                      className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded-md text-sm"
+                    >
+                      Mark as Solution
+                    </button>
+                  )
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Comment text */}
+          <p className="text-gray-400 mb-3">{comment.text}</p>
+
+          {/* Footer with solution badge and reply button */}
+          <div className="flex justify-between items-center mt-2">
+            <div className="flex gap-2 items-center">
+              {user && (
+                <button
+                  onClick={() => setReplyingTo(replyingTo === comment.id ? null : comment.id)}
+                  className="text-teal-400 hover:text-teal-300 text-sm flex items-center gap-1"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-4 w-4 rotate-180"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"
+                    />
+                  </svg>
+                  Reply
+                </button>
+              )}
+            </div>
+            {comment.id === post.solutionCommentId && (
+              <div className="text-green-500 font-bold">
+                ✓ Solution
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Reply form */}
+        {replyingTo === comment.id && (
+          <div className="ml-14 mb-4">
+            <textarea
+              className="w-full p-2 rounded bg-gray-800 text-white mb-2"
+              rows="2"
+              value={replyText}
+              onChange={(e) => setReplyText(e.target.value)}
+              placeholder="Write a reply..."
+            ></textarea>
+            <div className="flex gap-2">
+              <button
+                onClick={() => {
+                  handleCommentSubmit(comment.id, replyText);
+                  setReplyText("");
+                }}
+                className="bg-teal-500 hover:bg-teal-600 text-white px-3 py-1 rounded-md text-sm"
+              >
+                Submit Reply
+              </button>
+              <button
+                onClick={() => {
+                  setReplyingTo(null);
+                  setReplyText("");
+                }}
+                className="bg-gray-600 hover:bg-gray-500 text-white px-3 py-1 rounded-md text-sm"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Nested replies */}
+        {replies.length > 0 && (
+          <div className="ml-10">
+            {replies.map(reply => renderComment(reply, level + 1))}
+          </div>
+        )}
+      </div>
+    );
   };
 
   if (isLoading) {
@@ -408,44 +550,7 @@ export default function DetailedPostPage() {
         <div className="mt-8">
           <h3 className="text-xl font-bold mb-4">Comments</h3>
           {comments && comments.length > 0 ? (
-            comments.map((comment, index) => (
-              <div 
-                key={index} 
-                className={`bg-gray-700 p-4 rounded-md mb-4 flex items-start ${
-                  comment.id === post.solutionCommentId ? 'border-2 border-green-500' : ''
-                }`}
-              >
-                <img
-                  src={comment.profilePicture}
-                  alt={`${comment.commenterUsername}'s profile`}
-                  className="w-10 h-10 rounded-full mr-4 object-cover"
-                />
-                <div className="flex-grow">
-                  <div className="flex justify-between items-center">
-                    <Link
-                      href={`/profile/${comment.userId}`}
-                      className="text-teal-400 font-bold hover:underline"
-                    >
-                      {comment.commenterUsername || comment.username}
-                    </Link>
-                    {user && user.id === post.userId && !post.isSolved && (
-                      <button
-                        onClick={() => handleMarkSolution(comment.id)}
-                        className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded-md text-sm"
-                      >
-                        Mark as Solution
-                      </button>
-                    )}
-                  </div>
-                  <p className="text-gray-400">{comment.text}</p>
-                  {comment.id === post.solutionCommentId && (
-                    <div className="mt-2 text-green-500 font-bold">
-                      ✓ Solution
-                    </div>
-                  )}
-                </div>
-              </div>
-            ))
+            comments.filter(comment => !comment.parentCommentId).map(comment => renderComment(comment))
           ) : (
             <p className="text-gray-400">No comments yet. Be the first to comment!</p>
           )}
@@ -460,7 +565,7 @@ export default function DetailedPostPage() {
                 placeholder="Add your comment..."
               ></textarea>
               <button
-                onClick={handleCommentSubmit}
+                onClick={() => handleCommentSubmit()}
                 className="bg-teal-500 hover:bg-teal-600 text-white px-4 py-2 rounded-md"
               >
                 Submit Comment
