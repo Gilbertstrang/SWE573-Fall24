@@ -5,6 +5,7 @@ import dev.swe573.whatsthis.service.CommentService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.hateoas.CollectionModel;
 import org.springframework.hateoas.EntityModel;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -16,7 +17,7 @@ import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 
 @RestController
-@RequestMapping("api/comments")
+@RequestMapping("/api/comments")
 public class CommentController {
 
     @Autowired
@@ -79,6 +80,11 @@ public class CommentController {
         return EntityModel.of(updatedComment,
                 linkTo(methodOn(CommentController.class).getCommentsById(id)).withSelfRel(),
                 linkTo(methodOn(PostController.class).one(updatedComment.getPostId())).withRel("post"));
+    }
+
+    @GetMapping("/user/{userId}")
+    public List<CommentDto> getCommentsByUser(@PathVariable Long userId) {
+        return commentService.getCommentsByUserId(userId);
     }
 
 

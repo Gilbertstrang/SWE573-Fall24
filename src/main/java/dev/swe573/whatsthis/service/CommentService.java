@@ -12,7 +12,9 @@ import dev.swe573.whatsthis.repository.PostRepo;
 import dev.swe573.whatsthis.repository.UserRepo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -28,17 +30,43 @@ public class CommentService {
     @Autowired
     private PostRepo postRepo;
 
+    @Transactional
     public CommentDto newComment(CommentDto commentDto) {
-        Comment comment = toEntity(commentDto);
+        try {
+            // Create new comment
+            Comment comment = new Comment();
+            comment.setText(commentDto.getText());
+            comment.setVotes(0);
+            comment.setUsername(commentDto.getUsername());
+            comment.setUserId(commentDto.getUserId());
+            comment.setPostId(commentDto.getPostId());
+            
+            // Handle parent comment
+            if (commentDto.getParentCommentId() != null) {
+                Comment parentComment = commentRepo.findById(commentDto.getParentCommentId())
+                        .orElseThrow(() -> new CommentNotFoundException(commentDto.getParentCommentId()));
+                comment.setParentComment(parentComment);
+            }
 
-        if (commentDto.getParentCommentId() != null) {
-            Comment parentComment = commentRepo.findById(commentDto.getParentCommentId())
-                    .orElseThrow(() -> new CommentNotFoundException(commentDto.getParentCommentId()));
-            comment.setParentComment(parentComment);
+            // Process image URLs before saving
+            if (commentDto.getImageUrls() != null && !commentDto.getImageUrls().isEmpty()) {
+                List<String> processedUrls = commentDto.getImageUrls().stream()
+                        .map(url -> url.replace("/uploads/", ""))
+                        .collect(Collectors.toList());
+                comment.setImageUrls(processedUrls);
+            } else {
+                comment.setImageUrls(new ArrayList<>());
+            }
+
+            // Save the comment with all data in one transaction
+            Comment savedComment = commentRepo.save(comment);
+            
+            // Convert to DTO and return
+            return toDto(savedComment);
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw e;
         }
-
-        comment = commentRepo.save(comment);
-        return toDto(comment);
     }
 
     public CommentDto toDto(Comment comment) {
@@ -50,7 +78,17 @@ public class CommentService {
         commentDTO.setPostId(comment.getPostId());
         commentDTO.setUsername(comment.getUsername());
         commentDTO.setParentCommentId(comment.getParentComment() != null ? comment.getParentComment().getId() : null);
-        commentDTO.setImageUrls(comment.getImageUrls());
+        
+        // Add /uploads/ prefix to image URLs
+        if (comment.getImageUrls() != null) {
+            List<String> processedUrls = comment.getImageUrls().stream()
+                    .map(url -> "/uploads/" + url)
+                    .collect(Collectors.toList());
+            commentDTO.setImageUrls(processedUrls);
+        } else {
+            commentDTO.setImageUrls(new ArrayList<>());
+        }
+        
         return commentDTO;
     }
 
@@ -110,6 +148,18 @@ public class CommentService {
         comment.setVotes(comment.getVotes() - 1);
         comment = commentRepo.save(comment);
         return toDto(comment);
+    }
+
+    public List<CommentDto> getCommentsByUserId(Long userId) {
+        // Verify user exists
+        userRepo.findById(userId)
+            .orElseThrow(() -> new UserNotFoundException(userId));
+
+        List<Comment> comments = commentRepo.findByUserId(userId);
+        
+        return comments.stream()
+            .map(this::toDto)
+            .collect(Collectors.toList());
     }
 
 }

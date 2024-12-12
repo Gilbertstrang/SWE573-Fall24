@@ -1,12 +1,14 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useUser } from "../../../context/UserContext";
+import commentService from "../../../services/commentService";
 
 const ProfilePage = () => {
   const { id } = useParams(); 
   const { user, token, updateUser } = useUser();
+  const router = useRouter();
 
   const isOwnProfile = id === user?.id.toString(); 
 
@@ -18,6 +20,7 @@ const ProfilePage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
   const [activeTab, setActiveTab] = useState("profile");
+  const [userComments, setUserComments] = useState([]);
 
   const fetchProfileData = async () => {
     try {
@@ -58,6 +61,17 @@ const ProfilePage = () => {
     }
   };
 
+  const fetchUserComments = async () => {
+    try {
+      const profileId = id || user?.id;
+      const comments = await commentService.getUserComments(profileId);
+      setUserComments(comments);
+    } catch (error) {
+      setError("Failed to load comments.");
+      console.error("Error fetching user comments:", error);
+    }
+  };
+
   const handleUpdate = async () => {
     if (!isOwnProfile) return;
 
@@ -84,10 +98,16 @@ const ProfilePage = () => {
     }
   };
 
+  const handlePostClick = (postId) => {
+    router.push(`/posts/${postId}`);
+  };
+
   useEffect(() => {
     fetchProfileData();
     if (activeTab === "posts") {
       fetchUserPosts();
+    } else if (activeTab === "activity") {
+      fetchUserComments();
     }
   }, [id, activeTab]);
 
@@ -139,7 +159,11 @@ const ProfilePage = () => {
         return userPosts.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {userPosts.map((post) => (
-              <div key={post.id} className="bg-gray-700 p-4 rounded-md shadow-md">
+              <div 
+                key={post.id} 
+                className="bg-gray-700 p-4 rounded-md shadow-md hover:bg-gray-600 transition-colors cursor-pointer"
+                onClick={() => handlePostClick(post.id)}
+              >
                 <h3 className="text-xl font-bold mb-2">{post.title}</h3>
                 <p className="text-gray-400 mb-4">{post.description}</p>
                 {post.imageUrls?.length > 0 && (
@@ -149,9 +173,6 @@ const ProfilePage = () => {
                     className="w-full h-auto rounded-md mb-4"
                   />
                 )}
-                <a href={`/posts/${post.id}`} className="text-teal-400 hover:underline">
-                  View Post
-                </a>
               </div>
             ))}
           </div>
@@ -159,7 +180,24 @@ const ProfilePage = () => {
           <div className="text-gray-400 text-center">No posts yet.</div>
         );
       case "activity":
-        return <div className="text-gray-400 text-center">Comments will appear here.</div>;
+        return userComments.length > 0 ? (
+          <div className="space-y-4">
+            {userComments.map((comment) => (
+              <div 
+                key={comment.id} 
+                className="bg-gray-700 p-4 rounded-md hover:bg-gray-600 transition-colors cursor-pointer"
+                onClick={() => handlePostClick(comment.postId)}
+              >
+                <p className="text-gray-300 mb-2">{comment.text}</p>
+                <div className="flex justify-between items-center text-sm text-gray-400">
+                  <span>Votes: {comment.votes}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="text-gray-400 text-center">No comments yet.</div>
+        );
       default:
         return null;
     }
