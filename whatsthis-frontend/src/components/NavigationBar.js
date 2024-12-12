@@ -2,7 +2,7 @@
 import { useUser } from '../context/UserContext';
 import { useState } from 'react';
 import Link from 'next/link';
-
+import { useRouter } from 'next/navigation';
 
 const ChevronDown = () => (
   <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -17,7 +17,8 @@ const ChevronUp = () => (
 );
 
 function NavigationBar({ onOpenLogin, onOpenSignup, onSearch }) {
-  const { user, logout } = useUser();  
+  const { user, logout } = useUser();
+  const router = useRouter();
   const [isAdvancedOpen, setIsAdvancedOpen] = useState(false);
   const [searchParams, setSearchParams] = useState({
     query: "",
@@ -29,10 +30,8 @@ function NavigationBar({ onOpenLogin, onOpenSignup, onSearch }) {
     hardness: "",
     functionality: "",
     handmade: false,
-    tags: [],
   });
 
-  
   const predefinedShapes = ["Round", "Square", "Rectangle", "Triangle", "Oval", "Hexagon", "Irregular"];
   const predefinedMaterials = ["Plastic", "Metal", "Wood", "Glass", "Fabric", "Paper"];
   const predefinedColors = ["Red", "Green", "Blue", "Black", "White", "Yellow", "Purple", "Brown"];
@@ -52,20 +51,38 @@ function NavigationBar({ onOpenLogin, onOpenSignup, onSearch }) {
   const handleSearchSubmit = (e) => {
     e.preventDefault();
     onSearch(searchParams);
+    setIsAdvancedOpen(false);
+  };
+
+  const handleLogoClick = () => {
+    router.push('/');
+    setSearchParams({
+      query: "",
+      material: "",
+      color: "",
+      shape: "",
+      timePeriod: "",
+      pattern: "",
+      hardness: "",
+      functionality: "",
+      handmade: false,
+    });
+    if (onSearch) {
+      onSearch({});
+    }
   };
 
   return (
     <nav className="bg-gray-800 p-4">
       <div className="container mx-auto">
         <div className="flex justify-between items-center">
-          {/* Logo */}
-          <Link href="/">
-            <span className="text-white text-xl font-bold cursor-pointer">
-              What's This?
-            </span>
-          </Link>
+          <button 
+            onClick={handleLogoClick}
+            className="text-white text-xl font-bold cursor-pointer hover:text-teal-400 transition-colors"
+          >
+            What's This?
+          </button>
 
-         
           <div className="flex-grow mx-8">
             <form onSubmit={handleSearchSubmit}>
               <div className="flex items-center">
@@ -93,7 +110,6 @@ function NavigationBar({ onOpenLogin, onOpenSignup, onSearch }) {
                 </button>
               </div>
 
-              
               {isAdvancedOpen && (
                 <div className="absolute left-0 right-0 mt-2 mx-4 p-6 bg-gray-800 rounded-lg shadow-xl border border-gray-700 z-50">
                   <h3 className="text-white text-lg font-semibold mb-4">Advanced Search Options</h3>
@@ -230,7 +246,6 @@ function NavigationBar({ onOpenLogin, onOpenSignup, onSearch }) {
             </form>
           </div>
 
-         
           <div className="flex items-center space-x-4">
             {user ? (
               <>

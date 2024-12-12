@@ -335,44 +335,53 @@ public class PostService {
         userVotes.remove(key);
     }
 
-    // Add this at class level ????
+    // ????
     private static final Map<String, String> userVotes = new ConcurrentHashMap<>();
 
     public List<PostDto> searchPosts(Map<String, String> searchParams) {
-        return postRepo.findAll().stream()
-            .filter(post -> matchesSearchCriteria(post, searchParams))
+        String searchText = searchParams.get("query") != null ? searchParams.get("query").trim() : "";
+        
+        // Check if we have any filters
+        boolean hasFilters = searchParams.entrySet().stream()
+            .anyMatch(entry -> !entry.getKey().equals("query") && 
+                              entry.getValue() != null && 
+                              !entry.getValue().trim().isEmpty() &&
+                              !entry.getValue().equals("false"));
+
+        List<Post> searchResults;
+        
+        if (!hasFilters) {
+            searchResults = searchText.isEmpty() 
+                ? postRepo.findAll() 
+                : postRepo.findByTitleOrDescriptionContaining(searchText);
+        } else {
+            String material = searchParams.get("material");
+            String color = searchParams.get("color");
+            String shape = searchParams.get("shape");
+            String pattern = searchParams.get("pattern");
+            String timePeriod = searchParams.get("timePeriod");
+            String hardness = searchParams.get("hardness");
+            String functionality = searchParams.get("functionality");
+            Boolean handmade = searchParams.containsKey("handmade") ? 
+                Boolean.valueOf(searchParams.get("handmade")) : null;
+
+            // Convert empty strings to null for the filters!!!
+            material = (material != null && material.trim().isEmpty()) ? null : material;
+            color = (color != null && color.trim().isEmpty()) ? null : color;
+            shape = (shape != null && shape.trim().isEmpty()) ? null : shape;
+            pattern = (pattern != null && pattern.trim().isEmpty()) ? null : pattern;
+            timePeriod = (timePeriod != null && timePeriod.trim().isEmpty()) ? null : timePeriod;
+            hardness = (hardness != null && hardness.trim().isEmpty()) ? null : hardness;
+            functionality = (functionality != null && functionality.trim().isEmpty()) ? null : functionality;
+
+            searchResults = postRepo.searchPostsWithFilters(
+                searchText, material, color, shape, pattern, 
+                timePeriod, hardness, functionality, handmade
+            );
+        }
+
+        return searchResults.stream()
             .map(this::toDto)
             .collect(Collectors.toList());
-    }
-
-    private boolean matchesSearchCriteria(Post post, Map<String, String> params) {
-        // Basic text search
-        if (params.containsKey("query") && !params.get("query").isEmpty()) {
-            String query = params.get("query").toLowerCase();
-            boolean matchesBasicSearch = post.getTitle().toLowerCase().contains(query) ||
-                post.getDescription().toLowerCase().contains(query);
-            if (!matchesBasicSearch) return false;
-        }
-        // basic parameter inclution
-        if (params.containsKey("material") && !params.get("material").isEmpty()) {
-            if (!params.get("material").equals(post.getMaterial())) return false;
-        }
-        if (params.containsKey("color") && !params.get("color").isEmpty()) {
-            if (!params.get("color").equals(post.getColor())) return false;
-        }
-        if (params.containsKey("shape") && !params.get("shape").isEmpty()) {
-            if (!params.get("shape").equals(post.getShape())) return false;
-        }
-        if (params.containsKey("timePeriod") && !params.get("timePeriod").isEmpty()) {
-            if (!params.get("timePeriod").equals(post.getTimePeriod())) return false;
-        }
-        if (params.containsKey("pattern") && !params.get("pattern").isEmpty()) {
-            if (!params.get("pattern").equals(post.getPattern())) return false;
-        }
-        if (params.containsKey("handmade") && params.get("handmade").equals("true")) {
-            if (!Boolean.TRUE.equals(post.getHandmade())) return false;
-        }
-
-        return true;
     }
 }
