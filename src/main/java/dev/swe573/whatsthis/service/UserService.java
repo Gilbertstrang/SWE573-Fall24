@@ -91,8 +91,9 @@ public class UserService implements UserDetailsService{
         userDto.setUsername(user.getUsername());
         userDto.setEmail(user.getEmail());
         userDto.setRoles(user.getRoles());
-       // userDto.setPostIds(user.getPosts().stream().map(Post::getId).collect(Collectors.toList()));
-//        userDto.setCommentIds(user.getComments().stream().map(Comment::getId).collect(Collectors.toList()));
+        userDto.setBio(user.getBio());
+        userDto.setProfilePictureUrl(user.getProfilePictureUrl());
+        userDto.setCreatedAt(user.getCreatedAt());
         return userDto;
     }
 
@@ -128,5 +129,14 @@ public class UserService implements UserDetailsService{
 
     public Optional<User> findByUsername(String username) {
         return userRepo.findByUsername(username);
+    }
+
+    public UserDto updateProfilePicture(Long userId, String profilePictureUrl) {
+        User user = userRepo.findById(userId)
+                .orElseThrow(() -> new UserNotFoundException(userId));
+        
+        user.setProfilePictureUrl(profilePictureUrl);
+        User savedUser = userRepo.save(user);
+        return toDto(savedUser);
     }
 }

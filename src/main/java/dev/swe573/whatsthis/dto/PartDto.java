@@ -24,4 +24,11 @@ public class PartDto {
     private String icons;
     private Boolean handmade;
     private String functionality;
+
+    private String widthValue;
+    private String widthUnit;
+    private String heightValue;
+    private String heightUnit;
+    private String depthValue;
+    private String depthUnit;
 } 

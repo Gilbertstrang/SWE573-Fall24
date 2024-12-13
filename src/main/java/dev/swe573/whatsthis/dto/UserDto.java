@@ -2,6 +2,7 @@ package dev.swe573.whatsthis.dto;
 
 import lombok.Data;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Set;
 
@@ -13,7 +14,9 @@ public class UserDto {
     private String email;
     private String password; //This is going to change. It is here for testing.
     private Set<String> roles;
-    //private List<Long> postIds;
+    private String bio;
+    private String profilePictureUrl;
+    private LocalDateTime createdAt;
     private List<Long> commentIds;
 
 }

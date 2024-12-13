@@ -97,6 +97,12 @@ public class PostService {
         post.setTimePeriod(postDto.getTimePeriod());
         post.setHandmade(postDto.getHandmade());
         post.setFunctionality(postDto.getFunctionality());
+        post.setHeightValue(postDto.getHeightValue());
+        post.setHeightUnit(postDto.getHeightUnit());
+        post.setDepthValue(postDto.getDepthValue());
+        post.setDepthUnit(postDto.getDepthUnit());
+        post.setWidthValue(postDto.getWidthValue());
+        post.setWidthUnit(postDto.getWidthUnit());
 
 
         post.setTags(postDto.getTags() != null ? postDto.getTags() : new ArrayList<>());
@@ -130,6 +136,12 @@ public class PostService {
                     part.setIcons(partDto.getIcons());
                     part.setHandmade(partDto.getHandmade());
                     part.setFunctionality(partDto.getFunctionality());
+                    part.setHeightValue(partDto.getHeightValue());
+                    part.setHeightUnit(partDto.getHeightUnit());
+                    part.setDepthValue(partDto.getDepthValue());
+                    part.setDepthUnit(partDto.getDepthUnit());
+                    part.setWidthValue(partDto.getWidthValue());
+                    part.setWidthUnit(partDto.getWidthUnit());
                     return part;
                 })
                 .collect(Collectors.toList());
@@ -173,6 +185,12 @@ public class PostService {
         postDto.setTimePeriod(post.getTimePeriod());
         postDto.setHandmade(post.getHandmade());
         postDto.setFunctionality(post.getFunctionality());
+        postDto.setHeightValue(post.getHeightValue());
+        postDto.setHeightUnit(post.getHeightUnit());
+        postDto.setDepthValue(post.getDepthValue());
+        postDto.setDepthUnit(post.getDepthUnit());
+        postDto.setWidthValue(post.getWidthValue());
+        postDto.setWidthUnit(post.getWidthUnit());
 
         postDto.setComments(new ArrayList<>());
 
@@ -204,6 +222,12 @@ public class PostService {
                     partDto.setIcons(part.getIcons());
                     partDto.setHandmade(part.getHandmade());
                     partDto.setFunctionality(part.getFunctionality());
+                    partDto.setHeightValue(part.getHeightValue());
+                    partDto.setHeightUnit(part.getHeightUnit());
+                    partDto.setDepthValue(part.getDepthValue());
+                    partDto.setDepthUnit(part.getDepthUnit());
+                    partDto.setWidthValue(part.getWidthValue());
+                    partDto.setWidthUnit(part.getWidthUnit());
                     return partDto;
                 })
                 .collect(Collectors.toList());
@@ -249,6 +273,12 @@ public class PostService {
         existingPost.setHandmade(postDto.getHandmade());
         existingPost.setFunctionality(postDto.getFunctionality());
         existingPost.setPrice(postDto.getPrice());
+        existingPost.setHeightValue(postDto.getHeightValue());
+        existingPost.setHeightUnit(postDto.getHeightUnit());
+        existingPost.setDepthValue(postDto.getDepthValue());
+        existingPost.setDepthUnit(postDto.getDepthUnit());
+        existingPost.setWidthValue(postDto.getWidthValue());
+        existingPost.setWidthUnit(postDto.getWidthUnit());
 
         existingPost = postRepo.save(existingPost);
         return toDto(existingPost);

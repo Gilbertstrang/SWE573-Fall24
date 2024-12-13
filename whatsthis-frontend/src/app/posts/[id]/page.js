@@ -323,20 +323,68 @@ export default function DetailedPostPage() {
   }
 
   const renderAttributes = () => {
-    const excludedKeys = ["id", "userId", "title", "description", "imageUrls", "tags", "votes", "comments", "_links"];
-    return Object.keys(post)
-      .filter((key) => !excludedKeys.includes(key) && post[key])
-      .map((key) => (
-        <tr key={key} className="border-b border-gray-700">
-          <td className="py-2 px-2 font-bold text-gray-300 capitalize">{key.replace(/([A-Z])/g, " $1")}</td>
-          <td className="py-2 px-2 text-gray-400">{post[key].toString()}</td>
-        </tr>
-      ));
+    const excludedKeys = [
+      "id", "userId", "title", "description", "imageUrls", "tags", "votes", "comments", "_links",
+      "size", "sizeValue", "sizeUnit", 
+      "widthValue", "widthUnit", "heightValue", "heightUnit", "depthValue", "depthUnit", 
+      "parts", 
+      "weight", "weightValue", "weightUnit"
+    ];
+
+    return (
+      <>
+        {/* Dimensions rows */}
+        {(post.widthValue || post.heightValue || post.depthValue) && (
+          <tr className="border-b border-gray-700">
+            <td className="py-2 px-2 font-bold text-gray-300">Dimensions</td>
+            <td className="py-2 px-2 text-gray-400">
+              {[
+                post.widthValue && `Width: ${post.widthValue}${post.widthUnit ? ` ${post.widthUnit}` : ''}`,
+                post.heightValue && `Height: ${post.heightValue}${post.heightUnit ? ` ${post.heightUnit}` : ''}`,
+                post.depthValue && `Depth: ${post.depthValue}${post.depthUnit ? ` ${post.depthUnit}` : ''}`
+              ].filter(Boolean).join(' × ')}
+            </td>
+          </tr>
+        )}     
+        {post.weightValue && post.weightValue.trim() !== '' && (
+          <tr className="border-b border-gray-700">
+            <td className="py-2 px-2 font-bold text-gray-300">Weight</td>
+            <td className="py-2 px-2 text-gray-400">
+              {`${post.weightValue}${post.weightUnit ? ` ${post.weightUnit}` : ''}`}
+            </td>
+          </tr>
+        )}
+        {Object.keys(post)
+          .filter((key) => !excludedKeys.includes(key) && post[key] && post[key].toString().trim() !== '')
+          .map((key) => (
+            <tr key={key} className="border-b border-gray-700">
+              <td className="py-2 px-2 font-bold text-gray-300 capitalize">
+                {key.replace(/([A-Z])/g, " $1").trim()}
+              </td>
+              <td className="py-2 px-2 text-gray-400">
+                {typeof post[key] === 'boolean' ? (post[key] ? 'Yes' : 'No') : post[key].toString()}
+              </td>
+            </tr>
+          ))}
+      </>
+    );
   };
 
   const formatVotes = (votes) => {
     if (votes === 0) return "0";
     return votes > 0 ? `+${votes}` : `${votes}`;
+  };
+
+  const renderPartAttribute = (key, value) => {
+  
+    if (key.endsWith('Value')) {
+      const dimensionType = key.replace('Value', '');
+      const unitValue = part[`${dimensionType}Unit`];
+      if (unitValue) {
+        return `${value} ${unitValue}`;
+      }
+    }
+    return typeof value === 'boolean' ? (value ? 'Yes' : 'No') : value;
   };
 
   return (
@@ -354,7 +402,6 @@ export default function DetailedPostPage() {
           </Link>
         </div>
 
-        {/* Updated title section */}
         <div className="flex items-center gap-4 mb-6">
           <h1 className="text-3xl font-bold">{post.title}</h1>
           {post.isSolved && (
@@ -416,7 +463,9 @@ export default function DetailedPostPage() {
               <>
                 <h3 className="text-xl font-bold mb-4">Details</h3>
                 <table className="w-full text-left border-collapse border border-gray-700">
-                  <tbody>{renderAttributes()}</tbody>
+                  <tbody>
+                    {renderAttributes()}
+                  </tbody>
                 </table>
               </>
             ) : (
@@ -424,34 +473,56 @@ export default function DetailedPostPage() {
                 <h3 className="text-xl font-bold mb-4">Parts</h3>
                 {post.parts && post.parts.length > 0 ? (
                   post.parts.map((part, index) => (
-                    <div key={index} className="mb-6 bg-gray-700 p-4 rounded-lg">
+                    <div key={index} className="mb-6">
                       <h4 className="text-lg font-bold text-teal-400 mb-2">
                         {part.partName || `Part ${index + 1}`}
                       </h4>
-                      <div className="grid grid-cols-2 gap-4">
-                        {Object.entries(part)
-                          .filter(([key, value]) => 
-                            value !== null && 
-                            value !== undefined && 
-                            value !== '' && 
-                            key !== 'partName'
-                          )
-                          .map(([key, value]) => (
-                            <div key={key} className="border-b border-gray-600 py-2">
-                              <span className="font-semibold text-gray-300 capitalize">
-                                {key.replace(/([A-Z])/g, ' $1').trim()}:
-                              </span>
-                              <span className="ml-2 text-gray-400">
-                                {typeof value === 'boolean' 
-                                  ? (value ? 'Yes' : 'No') 
-                                  : value}
-                              </span>
-                            </div>
-                          ))}
-                      </div>
-                      {index < post.parts.length - 1 && (
-                        <div className="border-b border-gray-600 mt-4"></div>
-                      )}
+                      <table className="w-full text-left border-collapse border border-gray-700">
+                        <tbody>
+                          {(part.widthValue || part.heightValue || part.depthValue) && (
+                            <tr className="border-b border-gray-700">
+                              <td className="py-2 px-2 font-bold text-gray-300">Dimensions</td>
+                              <td className="py-2 px-2 text-gray-400">
+                                {[
+                                  part.widthValue && `Width: ${part.widthValue}${part.widthUnit ? ` ${part.widthUnit}` : ''}`,
+                                  part.heightValue && `Height: ${part.heightValue}${part.heightUnit ? ` ${part.heightUnit}` : ''}`,
+                                  part.depthValue && `Depth: ${part.depthValue}${part.depthUnit ? ` ${part.depthUnit}` : ''}`
+                                ].filter(Boolean).join(' × ')}
+                              </td>
+                            </tr>
+                          )}
+                          {Object.entries(part)
+                            .filter(([key, value]) => 
+                              value !== null && 
+                              value !== undefined && 
+                              value !== '' && 
+                              key !== 'partName' &&
+                              !key.includes('width') &&
+                              !key.includes('height') &&
+                              !key.includes('depth') &&
+                              !key.includes('size') && 
+                              !key.includes('weight')
+                            )
+                            .map(([key, value]) => (
+                              <tr key={key} className="border-b border-gray-700">
+                                <td className="py-2 px-2 font-bold text-gray-300 capitalize">
+                                  {key.replace(/([A-Z])/g, ' $1').trim()}
+                                </td>
+                                <td className="py-2 px-2 text-gray-400">
+                                  {typeof value === 'boolean' ? (value ? 'Yes' : 'No') : value}
+                                </td>
+                              </tr>
+                            ))}
+                          {part.weightValue && part.weightValue.trim() !== '' && (
+                            <tr className="border-b border-gray-700">
+                              <td className="py-2 px-2 font-bold text-gray-300">Weight</td>
+                              <td className="py-2 px-2 text-gray-400">
+                                {`${part.weightValue}${part.weightUnit ? ` ${part.weightUnit}` : ''}`}
+                              </td>
+                            </tr>
+                          )}
+                        </tbody>
+                      </table>
                     </div>
                   ))
                 ) : (
@@ -540,9 +611,6 @@ export default function DetailedPostPage() {
         {loginWarning && (
           <div className="fixed top-4 right-4 bg-red-500 text-white px-6 py-3 rounded-md shadow-lg animate-fade-in">
             Please log in to vote
-            <Link href="/login" className="ml-2 underline">
-              Login here
-            </Link>
           </div>
         )}
 

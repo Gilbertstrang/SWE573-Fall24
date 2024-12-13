@@ -34,6 +34,12 @@ const CreatePostPage = () => {
     functionality: "",
     tags: [],
     imageUrls: [],
+    widthValue: "",
+    widthUnit: "cm",
+    heightValue: "",
+    heightUnit: "cm",
+    depthValue: "",
+    depthUnit: "cm",
   });
 
   
@@ -140,6 +146,7 @@ const CreatePostPage = () => {
 
   const sizeUnits = ["cm", "in", "mm", "m"];
   const weightUnits = ["kg", "g", "lb", "oz"];
+  const dimensionUnits = ["mm", "cm", "m", "in", "ft"];
 
   const [tagsInput, setTagsInput] = useState("");
   const [tagSuggestions, setTagSuggestions] = useState([]);
@@ -150,15 +157,19 @@ const CreatePostPage = () => {
 
   const [parts, setParts] = useState([]);
   const [activePartIndex, setActivePartIndex] = useState(null);
+  const [editingPartName, setEditingPartName] = useState(null);
+  const [editedName, setEditedName] = useState("");
 
   const createEmptyPart = () => ({
     partName: `Part ${parts.length + 1}`,
     material: "",
-    size: "",
+    sizeValue: "",
+    sizeUnit: "cm",
     textAndLanguage: "",
     color: "",
     shape: "",
-    weight: "",
+    weightValue: "",
+    weightUnit: "kg",
     price: "",
     location: "",
     timePeriod: "",
@@ -172,6 +183,12 @@ const CreatePostPage = () => {
     icons: "",
     handmade: false,
     functionality: "",
+    widthValue: "",
+    widthUnit: "cm",
+    heightValue: "",
+    heightUnit: "cm",
+    depthValue: "",
+    depthUnit: "cm"
   });
 
   const addNewPart = () => {
@@ -183,7 +200,7 @@ const CreatePostPage = () => {
     const updatedParts = [...parts];
     updatedParts[index] = {
       ...updatedParts[index],
-      [name]: type === "checkbox" ? value.target.checked : value,
+      [name]: type === "checkbox" ? value.target.checked : (value || "")
     };
     setParts(updatedParts);
   };
@@ -301,12 +318,20 @@ const CreatePostPage = () => {
       print: part.print,
       icons: part.icons,
       handmade: part.handmade || false,
-      functionality: part.functionality
+      functionality: part.functionality,
+      widthValue: part.widthValue || '',
+      widthUnit: part.widthUnit || '',
+      heightValue: part.heightValue || '',
+      heightUnit: part.heightUnit || '',
+      depthValue: part.depthValue || '',
+      depthUnit: part.depthUnit || ''
     }));
 
     const postData = {
       ...formData,
-      size: `${formData.sizeValue} ${formData.sizeUnit}`,
+      height: `${formData.heightValue} ${formData.heightUnit}`,
+      length: `${formData.lengthValue} ${formData.lengthUnit}`,
+      width: `${formData.widthValue} ${formData.widthUnit}`,
       weight: `${formData.weightValue} ${formData.weightUnit}`,
       userId: user.id,
       parts: formattedParts, 
@@ -362,6 +387,45 @@ const CreatePostPage = () => {
     </div>
   );
 
+  const DimensionInput = ({ label, value, unit, onValueChange, onUnitChange, units }) => (
+    <div className="flex space-x-2">
+      <div className="flex-grow">
+        <label className="block text-lg font-semibold mb-2">{label}</label>
+        <input
+          type="text"
+          value={value}
+          onChange={onValueChange}
+          className="w-full px-4 py-3 rounded-lg bg-gray-600 text-white focus:outline-none focus:ring-2 focus:ring-teal-500"
+          placeholder={`Enter ${label.toLowerCase()}`}
+        />
+      </div>
+      <div className="w-24">
+        <label className="block text-lg font-semibold mb-2">Unit</label>
+        <select
+          value={unit}
+          onChange={onUnitChange}
+          className="w-full px-4 py-3 rounded-lg bg-gray-600 text-white focus:outline-none focus:ring-2 focus:ring-teal-500"
+        >
+          {units.map((u) => (
+            <option key={u} value={u}>
+              {u}
+            </option>
+          ))}
+        </select>
+      </div>
+    </div>
+  );
+
+  const handlePartNameEdit = (index, newName) => {
+    const updatedParts = [...parts];
+    updatedParts[index] = {
+      ...updatedParts[index],
+      partName: newName || `Part ${index + 1}`
+    };
+    setParts(updatedParts);
+    setEditingPartName(null);
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-gray-900 text-white">
       <div className="container mx-auto py-8">
@@ -413,10 +477,73 @@ const CreatePostPage = () => {
 
             {/* Parts Navigation and Content */}
             <div className="bg-gray-800 rounded-lg border border-gray-700 mb-8">
-              {/* Header */}
-              <div className="px-6 pt-6 pb-0">
-                <div className="flex justify-between items-center mb-4">
-                  <h3 className="text-xl font-bold">Item Details</h3>
+              {/* Header - Now with proper connection to content */}
+              <div className="px-6 pt-6">
+                <div className="flex justify-between items-center">
+                  <div className="flex space-x-2">
+                    <button
+                      type="button"
+                      onClick={() => setActivePartIndex(null)}
+                      className={`px-6 py-3 rounded-t-lg transition duration-150 ${
+                        activePartIndex === null
+                          ? "bg-gray-700 text-white"
+                          : "bg-gray-600 text-gray-300 hover:bg-gray-700 hover:text-white"
+                      }`}
+                    >
+                      General
+                    </button>
+                    {parts.map((part, index) => (
+                      <button
+                        key={index}
+                        type="button"
+                        onClick={() => setActivePartIndex(index)}
+                        className={`px-6 py-3 rounded-t-lg transition duration-150 ${
+                          activePartIndex === index
+                            ? "bg-gray-700 text-white"
+                            : "bg-gray-600 text-gray-300 hover:bg-gray-700 hover:text-white"
+                        }`}
+                      >
+                        <span className="flex items-center">
+                          {editingPartName === index ? (
+                            <input
+                              type="text"
+                              value={editedName}
+                              onChange={(e) => setEditedName(e.target.value)}
+                              onBlur={() => handlePartNameEdit(index, editedName)}
+                              onKeyPress={(e) => {
+                                if (e.key === 'Enter') {
+                                  handlePartNameEdit(index, editedName);
+                                }
+                              }}
+                              onClick={(e) => e.stopPropagation()}
+                              className="bg-gray-600 text-white px-2 py-1 rounded w-24"
+                              autoFocus
+                            />
+                          ) : (
+                            <span
+                              onDoubleClick={(e) => {
+                                e.stopPropagation();
+                                setEditingPartName(index);
+                                setEditedName(part.partName);
+                              }}
+                              className="cursor-text"
+                            >
+                              {part.partName}
+                            </span>
+                          )}
+                          <span
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              removePart(index);
+                            }}
+                            className="ml-3 text-red-400 hover:text-red-600 rounded-full hover:bg-gray-800 w-6 h-6 flex items-center justify-center"
+                          >
+                            ×
+                          </span>
+                        </span>
+                      </button>
+                    ))}
+                  </div>
                   <button
                     type="button"
                     onClick={addNewPart}
@@ -425,54 +552,105 @@ const CreatePostPage = () => {
                     Add Part
                   </button>
                 </div>
-
-                {/* Tabs */}
-                <div className="flex space-x-2">
-                  <button
-                    type="button"
-                    onClick={() => setActivePartIndex(null)}
-                    className={`px-6 py-3 rounded-t-lg transition duration-150 ${
-                      activePartIndex === null
-                        ? "bg-gray-700 text-white border-t border-l border-r border-gray-600"
-                        : "bg-gray-600 text-gray-300 hover:bg-gray-700 hover:text-white"
-                    }`}
-                  >
-                    General
-                  </button>
-                  {parts.map((part, index) => (
-                    <button
-                      key={index}
-                      type="button"
-                      onClick={() => setActivePartIndex(index)}
-                      className={`px-6 py-3 rounded-t-lg transition duration-150 ${
-                        activePartIndex === index
-                          ? "bg-gray-700 text-white border-t border-l border-r border-gray-600"
-                          : "bg-gray-600 text-gray-300 hover:bg-gray-700 hover:text-white"
-                      }`}
-                    >
-                      <span className="flex items-center">
-                        {part.partName}
-                        <span
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            removePart(index);
-                          }}
-                          className="ml-3 text-red-400 hover:text-red-600 rounded-full hover:bg-gray-800 w-6 h-6 flex items-center justify-center"
-                        >
-                          ×
-                        </span>
-                      </span>
-                    </button>
-                  ))}
-                </div>
               </div>
-
-              {/* Content Area */}
-              <div className="bg-gray-700 p-6 rounded-b-lg">
+              <div className="bg-gray-700 p-6">
                 {activePartIndex === null ? (
                   <div>
-            
-
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+                      <div className="lg:col-span-3 bg-gray-700 p-6 rounded-lg">
+                        <h3 className="text-lg font-semibold mb-4">Dimensions</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                          <div className="flex gap-2">
+                            <div className="flex-1">
+                              <input
+                                type="number"
+                                name="widthValue"
+                                value={formData.widthValue || ''}
+                                onChange={handleInputChange}
+                                placeholder="Width"
+                                className="w-full px-4 py-3 rounded-lg bg-gray-600 text-white focus:outline-none focus:ring-2 focus:ring-teal-500"
+                              />
+                            </div>
+                            <select
+                              name="widthUnit"
+                              value={formData.widthUnit || 'cm'}
+                              onChange={handleInputChange}
+                              className="w-24 px-2 py-3 rounded-lg bg-gray-600 text-white focus:outline-none focus:ring-2 focus:ring-teal-500"
+                            >
+                              {dimensionUnits.map(unit => (
+                                <option key={unit} value={unit}>{unit}</option>
+                              ))}
+                            </select>
+                          </div>
+                          <div className="flex gap-2">
+                            <div className="flex-1">
+                              <input
+                                type="number"
+                                name="heightValue"
+                                value={formData.heightValue || ''}
+                                onChange={handleInputChange}
+                                placeholder="Height"
+                                className="w-full px-4 py-3 rounded-lg bg-gray-600 text-white focus:outline-none focus:ring-2 focus:ring-teal-500"
+                              />
+                            </div>
+                            <select
+                              name="heightUnit"
+                              value={formData.heightUnit || 'cm'}
+                              onChange={handleInputChange}
+                              className="w-24 px-2 py-3 rounded-lg bg-gray-600 text-white focus:outline-none focus:ring-2 focus:ring-teal-500"
+                            >
+                              {dimensionUnits.map(unit => (
+                                <option key={unit} value={unit}>{unit}</option>
+                              ))}
+                            </select>
+                          </div>
+                          <div className="flex gap-2">
+                            <div className="flex-1">
+                              <input
+                                type="number"
+                                name="depthValue"
+                                value={formData.depthValue || ''}
+                                onChange={handleInputChange}
+                                placeholder="Depth"
+                                className="w-full px-4 py-3 rounded-lg bg-gray-600 text-white focus:outline-none focus:ring-2 focus:ring-teal-500"
+                              />
+                            </div>
+                            <select
+                              name="depthUnit"
+                              value={formData.depthUnit || 'cm'}
+                              onChange={handleInputChange}
+                              className="w-24 px-2 py-3 rounded-lg bg-gray-600 text-white focus:outline-none focus:ring-2 focus:ring-teal-500"
+                            >
+                              {dimensionUnits.map(unit => (
+                                <option key={unit} value={unit}>{unit}</option>
+                              ))}
+                            </select>
+                          </div>
+                          <div className="flex gap-2">
+                            <div className="flex-1">
+                              <input
+                                type="number"
+                                name="weightValue"
+                                value={formData.weightValue || ''}
+                                onChange={handleInputChange}
+                                placeholder="Weight"
+                                className="w-full px-4 py-3 rounded-lg bg-gray-600 text-white focus:outline-none focus:ring-2 focus:ring-teal-500"
+                              />
+                            </div>
+                            <select
+                              name="weightUnit"
+                              value={formData.weightUnit || 'kg'}
+                              onChange={handleInputChange}
+                              className="w-24 px-2 py-3 rounded-lg bg-gray-600 text-white focus:outline-none focus:ring-2 focus:ring-teal-500"
+                            >
+                              {weightUnits.map(unit => (
+                                <option key={unit} value={unit}>{unit}</option>
+                              ))}
+                            </select>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                       {/* Column 1 */}
                       <div className="space-y-6">
@@ -578,20 +756,94 @@ const CreatePostPage = () => {
                     </div>
                   </div>
                 ) : (
-                  
                   <div>
-                    {/* Part Name */}
-                    <div className="lg:col-span-3 mb-6">
-                      <label className="block text-lg font-semibold mb-2">Part Name</label>
-                      <input
-                        type="text"
-                        value={parts[activePartIndex].partName}
-                        onChange={(e) => handlePartInputChange(activePartIndex, "partName", e.target.value)}
-                        className="w-full px-4 py-3 rounded-lg bg-gray-600 text-white focus:outline-none focus:ring-2 focus:ring-teal-500"
-                        placeholder="Part Name"
-                      />
+                    <div className="mb-8">
+                      <div className="lg:col-span-3 bg-gray-700 p-6 rounded-lg">
+                        <h3 className="text-lg font-semibold mb-4">Part Dimensions</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                          <div className="flex gap-2">
+                            <div className="flex-1">
+                              <input
+                                type="number"
+                                value={parts[activePartIndex]?.widthValue || ''}
+                                onChange={(e) => handlePartInputChange(activePartIndex, "widthValue", e.target.value)}
+                                placeholder="Width"
+                                className="w-full px-4 py-3 rounded-lg bg-gray-600 text-white focus:outline-none focus:ring-2 focus:ring-teal-500"
+                              />
+                            </div>
+                            <select
+                              value={parts[activePartIndex]?.widthUnit || 'cm'}
+                              onChange={(e) => handlePartInputChange(activePartIndex, "widthUnit", e.target.value)}
+                              className="w-24 px-2 py-3 rounded-lg bg-gray-600 text-white focus:outline-none focus:ring-2 focus:ring-teal-500"
+                            >
+                              {dimensionUnits.map(unit => (
+                                <option key={unit} value={unit}>{unit}</option>
+                              ))}
+                            </select>
+                          </div>
+                          <div className="flex gap-2">
+                            <div className="flex-1">
+                              <input
+                                type="number"
+                                value={parts[activePartIndex]?.heightValue || ''}
+                                onChange={(e) => handlePartInputChange(activePartIndex, "heightValue", e.target.value)}
+                                placeholder="Height"
+                                className="w-full px-4 py-3 rounded-lg bg-gray-600 text-white focus:outline-none focus:ring-2 focus:ring-teal-500"
+                              />
+                            </div>
+                            <select
+                              value={parts[activePartIndex]?.heightUnit || 'cm'}
+                              onChange={(e) => handlePartInputChange(activePartIndex, "heightUnit", e.target.value)}
+                              className="w-24 px-2 py-3 rounded-lg bg-gray-600 text-white focus:outline-none focus:ring-2 focus:ring-teal-500"
+                            >
+                              {dimensionUnits.map(unit => (
+                                <option key={unit} value={unit}>{unit}</option>
+                              ))}
+                            </select>
+                          </div>
+                          <div className="flex gap-2">
+                            <div className="flex-1">
+                              <input
+                                type="number"
+                                value={parts[activePartIndex]?.depthValue || ''}
+                                onChange={(e) => handlePartInputChange(activePartIndex, "depthValue", e.target.value)}
+                                placeholder="Depth"
+                                className="w-full px-4 py-3 rounded-lg bg-gray-600 text-white focus:outline-none focus:ring-2 focus:ring-teal-500"
+                              />
+                            </div>
+                            <select
+                              value={parts[activePartIndex]?.depthUnit || 'cm'}
+                              onChange={(e) => handlePartInputChange(activePartIndex, "depthUnit", e.target.value)}
+                              className="w-24 px-2 py-3 rounded-lg bg-gray-600 text-white focus:outline-none focus:ring-2 focus:ring-teal-500"
+                            >
+                              {dimensionUnits.map(unit => (
+                                <option key={unit} value={unit}>{unit}</option>
+                              ))}
+                            </select>
+                          </div>
+                          <div className="flex gap-2">
+                            <div className="flex-1">
+                              <input
+                                type="number"
+                                value={parts[activePartIndex]?.weightValue || ''}
+                                onChange={(e) => handlePartInputChange(activePartIndex, "weightValue", e.target.value)}
+                                placeholder="Weight"
+                                className="w-full px-4 py-3 rounded-lg bg-gray-600 text-white focus:outline-none focus:ring-2 focus:ring-teal-500"
+                              />
+                            </div>
+                            <select
+                              value={parts[activePartIndex]?.weightUnit || 'kg'}
+                              onChange={(e) => handlePartInputChange(activePartIndex, "weightUnit", e.target.value)}
+                              className="w-24 px-2 py-3 rounded-lg bg-gray-600 text-white focus:outline-none focus:ring-2 focus:ring-teal-500"
+                            >
+                              {weightUnits.map(unit => (
+                                <option key={unit} value={unit}>{unit}</option>
+                              ))}
+                            </select>
+                          </div>
+                        </div>
+                      </div>
                     </div>
-
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                       {/* Column 1 */}
                       <div className="space-y-6">
@@ -599,23 +851,26 @@ const CreatePostPage = () => {
                           { name: "material", options: predefinedMaterials, label: "Material" },
                           { name: "color", options: predefinedColors, label: "Color" },
                           { name: "shape", options: predefinedShapes, label: "Shape" },
-                        ].map(({ name, options, label }) => (
-                          <div key={name}>
+                        ].map((field) => (
+                          <div key={field.name}>
                             <label className="block text-lg font-semibold mb-2">
-                              {label}
+                              {field.label}
                             </label>
-                            <select
-                              value={parts[activePartIndex][name]}
-                              onChange={(e) => handlePartInputChange(activePartIndex, name, e.target.value)}
-                              className="w-full px-4 py-3 rounded-lg bg-gray-600 text-white focus:outline-none focus:ring-2 focus:ring-teal-500"
-                            >
-                              <option value="">Select {label.toLowerCase()}</option>
-                              {options.map((option) => (
-                                <option key={option} value={option}>
-                                  {option}
-                                </option>
-                              ))}
-                            </select>
+                            <div className="relative">
+                              <input
+                                type="text"
+                                value={parts[activePartIndex][field.name]}
+                                onChange={(e) => handlePartInputChange(activePartIndex, field.name, e.target.value)}
+                                list={`part-${field.name}-options`}
+                                className="w-full px-4 py-3 rounded-lg bg-gray-600 text-white focus:outline-none focus:ring-2 focus:ring-teal-500"
+                                placeholder={`Enter or select ${field.label.toLowerCase()}`}
+                              />
+                              <datalist id={`part-${field.name}-options`}>
+                                {field.options.map((option) => (
+                                  <option key={option} value={option} />
+                                ))}
+                              </datalist>
+                            </div>
                           </div>
                         ))}
 
@@ -641,23 +896,26 @@ const CreatePostPage = () => {
                           { name: "pattern", options: predefinedPatterns, label: "Pattern" },
                           { name: "timePeriod", options: predefinedTimePeriods, label: "Time Period" },
                           { name: "hardness", options: predefinedHardness, label: "Hardness" },
-                        ].map(({ name, options, label }) => (
-                          <div key={name}>
+                        ].map((field) => (
+                          <div key={field.name}>
                             <label className="block text-lg font-semibold mb-2">
-                              {label}
+                              {field.label}
                             </label>
-                            <select
-                              value={parts[activePartIndex][name]}
-                              onChange={(e) => handlePartInputChange(activePartIndex, name, e.target.value)}
-                              className="w-full px-4 py-3 rounded-lg bg-gray-600 text-white focus:outline-none focus:ring-2 focus:ring-teal-500"
-                            >
-                              <option value="">Select {label.toLowerCase()}</option>
-                              {options.map((option) => (
-                                <option key={option} value={option}>
-                                  {option}
-                                </option>
-                              ))}
-                            </select>
+                            <div className="relative">
+                              <input
+                                type="text"
+                                value={parts[activePartIndex][field.name]}
+                                onChange={(e) => handlePartInputChange(activePartIndex, field.name, e.target.value)}
+                                list={`part-${field.name}-options`}
+                                className="w-full px-4 py-3 rounded-lg bg-gray-600 text-white focus:outline-none focus:ring-2 focus:ring-teal-500"
+                                placeholder={`Enter or select ${field.label.toLowerCase()}`}
+                              />
+                              <datalist id={`part-${field.name}-options`}>
+                                {field.options.map((option) => (
+                                  <option key={option} value={option} />
+                                ))}
+                              </datalist>
+                            </div>
                           </div>
                         ))}
 

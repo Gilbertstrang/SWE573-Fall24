@@ -14,6 +14,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.HashMap;
 import java.util.List;
@@ -30,12 +31,14 @@ public class UserController {
 
     private final JwtUtil jwtUtil;
     private final AuthenticationManager authenticationManager;
+    private final FileUploadController fileUploadController;
 
     @Autowired
-    public UserController(UserService userService, JwtUtil jwtUtil, AuthenticationManager authenticationManager) {
+    public UserController(UserService userService, JwtUtil jwtUtil, AuthenticationManager authenticationManager, FileUploadController fileUploadController) {
         this.userService = userService;
         this.jwtUtil = jwtUtil;
         this.authenticationManager = authenticationManager;
+        this.fileUploadController = fileUploadController;
     }
 
     @GetMapping()
@@ -116,5 +119,30 @@ public class UserController {
     public ResponseEntity<?> deleteUser(@PathVariable Long id) {
         userService.deleteUser(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/{id}/profile-picture")
+    public ResponseEntity<?> uploadProfilePicture(@PathVariable Long id, @RequestParam("image") MultipartFile file) {
+        try {
+            // Use the injected fileUploadController instance
+            List<MultipartFile> images = List.of(file);
+            ResponseEntity<List<String>> uploadResponse = fileUploadController.uploadImages(images);
+            
+            if (uploadResponse.getStatusCode() != HttpStatus.OK || uploadResponse.getBody() == null || uploadResponse.getBody().isEmpty()) {
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("error", "Failed to upload profile picture"));
+            }
+
+            String profilePictureUrl = uploadResponse.getBody().get(0);
+            
+            // Update user's profile picture URL
+            UserDto updatedUser = userService.updateProfilePicture(id, profilePictureUrl);
+            
+            return ResponseEntity.ok(Map.of(
+                "profilePictureUrl", profilePictureUrl,
+                "message", "Profile picture updated successfully"
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Failed to update profile picture"));
+        }
     }
 }
