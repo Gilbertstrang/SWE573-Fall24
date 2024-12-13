@@ -10,6 +10,7 @@ export default function HomePage() {
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const { user } = useUser();
+  const [sortBy, setSortBy] = useState("newest");
 
   const handleSearch = async (searchParams) => {
     setLoading(true);
@@ -20,6 +21,23 @@ export default function HomePage() {
       console.error("Error searching posts:", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const getSortedPosts = () => {
+    if (!posts) return [];
+    
+    switch (sortBy) {
+      case "solved":
+        return [...posts].filter(post => post.solved);
+      case "unsolved":
+        return [...posts].filter(post => !post.solved);
+      case "mostVoted":
+        return [...posts].sort((a, b) => b.votes - a.votes);
+      case "newest":
+        return [...posts].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+      default:
+        return posts;
     }
   };
 
@@ -47,10 +65,53 @@ export default function HomePage() {
     <div className="bg-gray-900 text-white min-h-screen">
       <div className="p-8">
         <div className="container mx-auto">
-          <div className="text-center mb-12">
+          <div className="flex justify-between items-center mb-8">
+            <div className="flex gap-4">
+              <button
+                onClick={() => setSortBy("newest")}
+                className={`px-4 py-2 rounded-lg transition-colors ${
+                  sortBy === "newest"
+                    ? "bg-teal-500 text-white"
+                    : "bg-gray-800 text-gray-300 hover:bg-gray-700"
+                }`}
+              >
+                Newest
+              </button>
+              <button
+                onClick={() => setSortBy("mostVoted")}
+                className={`px-4 py-2 rounded-lg transition-colors ${
+                  sortBy === "mostVoted"
+                    ? "bg-teal-500 text-white"
+                    : "bg-gray-800 text-gray-300 hover:bg-gray-700"
+                }`}
+              >
+                Most Voted
+              </button>
+              <button
+                onClick={() => setSortBy("solved")}
+                className={`px-4 py-2 rounded-lg transition-colors ${
+                  sortBy === "solved"
+                    ? "bg-teal-500 text-white"
+                    : "bg-gray-800 text-gray-300 hover:bg-gray-700"
+                }`}
+              >
+                Solved
+              </button>
+              <button
+                onClick={() => setSortBy("unsolved")}
+                className={`px-4 py-2 rounded-lg transition-colors ${
+                  sortBy === "unsolved"
+                    ? "bg-teal-500 text-white"
+                    : "bg-gray-800 text-gray-300 hover:bg-gray-700"
+                }`}
+              >
+                Unsolved
+              </button>
+            </div>
+
             {user && (
               <Link href="create-post">
-                <button className="bg-teal-500 text-white px-10 py-5 text-2xl font-semibold rounded-lg hover:bg-teal-600 transition shadow-lg">
+                <button className="bg-teal-500 text-white px-6 py-2 rounded-lg hover:bg-teal-600 transition shadow-lg">
                   New Mystery
                 </button>
               </Link>
@@ -63,7 +124,7 @@ export default function HomePage() {
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 items-start">
-              {posts.map((post) => (
+              {getSortedPosts().map((post) => (
                 <PostCard key={post.id} post={post} />
               ))}
             </div>

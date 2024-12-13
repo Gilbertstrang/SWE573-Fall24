@@ -25,6 +25,24 @@ export default function DetailedPostPage() {
   const [loginWarning, setLoginWarning] = useState(false);
   const [replyingTo, setReplyingTo] = useState(null);
   const [replyText, setReplyText] = useState("");
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [activePartIndex, setActivePartIndex] = useState(0);
+  const [tagDetails, setTagDetails] = useState({});
+
+  useEffect(() => {
+    if (user) {
+      const fetchUserVote = async () => {
+        try {
+          const currentUserVote = await postService.getUserVote(id, user.id);
+          setUserVote(currentUserVote);
+        } catch (error) {
+          console.error("Error fetching user vote:", error);
+        }
+      };
+      fetchUserVote();
+    }
+  }, [id, user]);
 
   useEffect(() => {
     const fetchPostAndComments = async () => {
@@ -68,7 +86,6 @@ export default function DetailedPostPage() {
         });
 
         setComments(sortedComments);
-
         
         if (user) {
           const currentUserVote = await postService.getUserVote(id, user.id);
@@ -84,6 +101,27 @@ export default function DetailedPostPage() {
 
     fetchPostAndComments();
   }, [id, user]);
+
+  useEffect(() => {
+    const fetchTagDetails = async () => {
+      if (post?.tags) {
+        const details = {};
+        for (const tag of post.tags) {
+          try {
+            const tagInfo = await postService.getTagDetails(tag);
+            if (tagInfo && tagInfo.length > 0) {
+              details[tag] = tagInfo[0];
+            }
+          } catch (error) {
+            console.error(`Error fetching details for tag ${tag}:`, error);
+          }
+        }
+        setTagDetails(details);
+      }
+    };
+    
+    fetchTagDetails();
+  }, [post?.tags]);
 
   const handleVote = async (voteType) => {
     if (!user) {
@@ -142,12 +180,12 @@ export default function DetailedPostPage() {
     }
   };
 
-  const handleImageClick = (imageUrl) => {
-    setFullscreenImage(imageUrl);
+  const handleImageClick = () => {
+    setIsFullscreen(true);
   };
 
-  const closeFullscreenImage = () => {
-    setFullscreenImage(null);
+  const closeFullscreen = () => {
+    setIsFullscreen(false);
   };
 
   const handleMarkSolution = async (commentId) => {
@@ -181,136 +219,127 @@ export default function DetailedPostPage() {
 
   const renderComment = (comment, level = 0) => {
     const replies = comments.filter(c => c.parentCommentId === comment.id);
+    const isSolution = comment.id === post.solutionCommentId;
     
     return (
-      <div key={comment.id} style={{ marginLeft: `${level * 20}px` }}>
-        <div 
-          className={`bg-gray-700 p-4 rounded-md mb-2 flex flex-col ${
-            comment.id === post.solutionCommentId ? 'border-2 border-green-500' : ''
-          }`}
-        >
-          {/* Header with profile picture and username */}
-          <div className="flex items-start mb-3">
-            <img
-              src={comment.profilePicture}
-              alt={`${comment.commenterUsername}'s profile`}
-              className="w-10 h-10 rounded-full mr-4 object-cover"
-            />
-            <div className="flex-grow">
-              <div className="flex justify-between items-center">
+      <div key={`comment-content-${comment.id}`} className={`${level > 0 ? 'ml-8' : ''}`}>
+        <div className="flex gap-3">
+          <img
+            src={comment.profilePicture}
+            alt={`${comment.commenterUsername}'s profile`}
+            className="w-10 h-10 rounded-full object-cover"
+          />
+          <div className="flex-1">
+            <div className={`bg-gray-750 rounded-lg p-4 ${
+              isSolution ? 'ring-1 ring-green-500/50' : ''
+            }`}>
+              <div className="flex items-center justify-between mb-2">
                 <Link
                   href={`/profile/${comment.userId}`}
-                  className="text-teal-400 font-bold hover:underline"
+                  className="text-teal-400 font-medium hover:underline"
                 >
-                  {comment.commenterUsername || comment.username}
+                  {comment.commenterUsername}
                 </Link>
-                {user && user.id === post.userId && !post.isSolved && (
-                  comment.id === post.solutionCommentId ? (
-                    <div className="bg-green-700 text-white px-3 py-1 rounded-md text-sm flex items-center gap-1">
-                      <svg 
-                        xmlns="http://www.w3.org/2000/svg" 
-                        className="h-4 w-4" 
-                        viewBox="0 0 20 20" 
-                        fill="currentColor"
-                      >
-                        <path 
-                          fillRule="evenodd" 
-                          d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" 
-                          clipRule="evenodd" 
-                        />
-                      </svg>
-                      Marked as Solution
-                    </div>
-                  ) : (
-                    <button
-                      onClick={() => handleMarkSolution(comment.id)}
-                      className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded-md text-sm"
-                    >
-                      Mark as Solution
-                    </button>
-                  )
+                {isSolution && (
+                  <span className="bg-green-500/20 text-green-400 px-3 py-1 rounded-full text-sm font-medium flex items-center gap-1">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                    </svg>
+                    Solution
+                  </span>
                 )}
               </div>
+              <p className="text-gray-300">{comment.text}</p>
             </div>
-          </div>
-
-          {/* Comment text */}
-          <p className="text-gray-400 mb-3">{comment.text}</p>
-
-          {/* Footer with solution badge and reply button */}
-          <div className="flex justify-between items-center mt-2">
-            <div className="flex gap-2 items-center">
+            
+            <div className="mt-2 flex items-center gap-4">
               {user && (
                 <button
                   onClick={() => setReplyingTo(replyingTo === comment.id ? null : comment.id)}
-                  className="text-teal-400 hover:text-teal-300 text-sm flex items-center gap-1"
+                  className="text-sm text-gray-400 hover:text-teal-400 transition-colors"
                 >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-4 w-4 rotate-180"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"
-                    />
-                  </svg>
                   Reply
                 </button>
               )}
+              {user && user.id === post.userId && !post.isSolved && (
+                <button
+                  onClick={() => handleMarkSolution(comment.id)}
+                  className="text-sm text-gray-400 hover:text-green-400 transition-colors"
+                >
+                  Mark as Solution
+                </button>
+              )}
             </div>
-            {comment.id === post.solutionCommentId && (
-              <div className="text-green-500 font-bold">
-                ✓ Solution
+
+            {replyingTo === comment.id && (
+              <div className="mt-4">
+                <textarea
+                  value={replyText}
+                  onChange={(e) => setReplyText(e.target.value)}
+                  className="w-full bg-gray-700 rounded-lg p-3 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-teal-500"
+                  placeholder="Write your reply..."
+                  rows="2"
+                />
+                <div className="mt-2 flex gap-2">
+                  <button
+                    onClick={() => handleCommentSubmit(comment.id, replyText)}
+                    className="bg-teal-500 hover:bg-teal-600 text-white px-3 py-1 rounded-md text-sm"
+                  >
+                    Post Reply
+                  </button>
+                  <button
+                    onClick={() => {
+                      setReplyingTo(null);
+                      setReplyText("");
+                    }}
+                    className="bg-gray-600 hover:bg-gray-500 text-white px-3 py-1 rounded-md text-sm"
+                  >
+                    Cancel
+                  </button>
+                </div>
               </div>
             )}
           </div>
         </div>
 
-        {/* Reply form */}
-        {replyingTo === comment.id && (
-          <div className="ml-14 mb-4">
-            <textarea
-              className="w-full p-2 rounded bg-gray-800 text-white mb-2"
-              rows="2"
-              value={replyText}
-              onChange={(e) => setReplyText(e.target.value)}
-              placeholder="Write a reply..."
-            ></textarea>
-            <div className="flex gap-2">
-              <button
-                onClick={() => {
-                  handleCommentSubmit(comment.id, replyText);
-                  setReplyText("");
-                }}
-                className="bg-teal-500 hover:bg-teal-600 text-white px-3 py-1 rounded-md text-sm"
-              >
-                Submit Reply
-              </button>
-              <button
-                onClick={() => {
-                  setReplyingTo(null);
-                  setReplyText("");
-                }}
-                className="bg-gray-600 hover:bg-gray-500 text-white px-3 py-1 rounded-md text-sm"
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* Nested replies */}
         {replies.length > 0 && (
-          <div className="ml-10">
-            {replies.map(reply => renderComment(reply, level + 1))}
+          <div className="mt-4">
+            {replies.map(reply => (
+              <div key={`reply-${reply.id}`}>
+                {renderComment(reply, level + 1)}
+              </div>
+            ))}
           </div>
         )}
       </div>
+    );
+  };
+
+  const nextImage = (e) => {
+    e.stopPropagation();
+    setCurrentImageIndex((prev) => 
+      prev === post.imageUrls.length - 1 ? 0 : prev + 1
+    );
+  };
+
+  const previousImage = (e) => {
+    e.stopPropagation();
+    setCurrentImageIndex((prev) => 
+      prev === 0 ? post.imageUrls.length - 1 : prev - 1
+    );
+  };
+
+  const handleFullscreenNext = (e) => {
+    e.stopPropagation();
+    setCurrentImageIndex((prev) => 
+      prev === post.imageUrls.length - 1 ? 0 : prev + 1
+    );
+  };
+
+  const handleFullscreenPrevious = (e) => {
+    e.stopPropagation();
+    setCurrentImageIndex((prev) => 
+      prev === 0 ? post.imageUrls.length - 1 : prev - 1
     );
   };
 
@@ -328,45 +357,78 @@ export default function DetailedPostPage() {
       "size", "sizeValue", "sizeUnit", 
       "widthValue", "widthUnit", "heightValue", "heightUnit", "depthValue", "depthUnit", 
       "parts", 
-      "weight", "weightValue", "weightUnit"
+      "weight", "weightValue", "weightUnit",
+      "solutionCommentId",
+      "isSolved",
+      "solved"
     ];
 
     return (
-      <>
-        {/* Dimensions rows */}
-        {(post.widthValue || post.heightValue || post.depthValue) && (
-          <tr className="border-b border-gray-700">
-            <td className="py-2 px-2 font-bold text-gray-300">Dimensions</td>
-            <td className="py-2 px-2 text-gray-400">
-              {[
-                post.widthValue && `Width: ${post.widthValue}${post.widthUnit ? ` ${post.widthUnit}` : ''}`,
-                post.heightValue && `Height: ${post.heightValue}${post.heightUnit ? ` ${post.heightUnit}` : ''}`,
-                post.depthValue && `Depth: ${post.depthValue}${post.depthUnit ? ` ${post.depthUnit}` : ''}`
-              ].filter(Boolean).join(' × ')}
-            </td>
-          </tr>
-        )}     
-        {post.weightValue && post.weightValue.trim() !== '' && (
-          <tr className="border-b border-gray-700">
-            <td className="py-2 px-2 font-bold text-gray-300">Weight</td>
-            <td className="py-2 px-2 text-gray-400">
-              {`${post.weightValue}${post.weightUnit ? ` ${post.weightUnit}` : ''}`}
-            </td>
-          </tr>
-        )}
-        {Object.keys(post)
-          .filter((key) => !excludedKeys.includes(key) && post[key] && post[key].toString().trim() !== '')
-          .map((key) => (
-            <tr key={key} className="border-b border-gray-700">
-              <td className="py-2 px-2 font-bold text-gray-300 capitalize">
-                {key.replace(/([A-Z])/g, " $1").trim()}
-              </td>
-              <td className="py-2 px-2 text-gray-400">
-                {typeof post[key] === 'boolean' ? (post[key] ? 'Yes' : 'No') : post[key].toString()}
-              </td>
-            </tr>
-          ))}
-      </>
+      <div className="space-y-2">
+        {/* Table Layout */}
+        <div className="bg-gray-800 rounded-lg overflow-hidden">
+          {(post.widthValue || post.heightValue || post.depthValue) && (
+            <div className="flex items-center border-b border-gray-700/50 last:border-0">
+              <div className="w-1/3 p-4 bg-gray-800/50">
+                <span className="text-gray-400 text-sm">Dimensions</span>
+              </div>
+              <div className="w-2/3 p-4 flex gap-4">
+                {post.widthValue && (
+                  <span key="width" className="text-white">
+                    {post.widthValue}{post.widthUnit} × 
+                  </span>
+                )}
+                {post.heightValue && (
+                  <span key="height" className="text-white">
+                    {post.heightValue}{post.heightUnit} × 
+                  </span>
+                )}
+                {post.depthValue && (
+                  <span key="depth" className="text-white">
+                    {post.depthValue}{post.depthUnit}
+                  </span>
+                )}
+              </div>
+            </div>
+          )}
+
+          {post.weightValue && post.weightValue.trim() !== '' && (
+            <div className="flex items-center border-b border-gray-700/50 last:border-0">
+              <div className="w-1/3 p-4 bg-gray-800/50">
+                <span className="text-gray-400 text-sm">Weight</span>
+              </div>
+              <div className="w-2/3 p-4">
+                <span className="text-white">{post.weightValue}{post.weightUnit}</span>
+              </div>
+            </div>
+          )}
+
+          {Object.entries(post)
+            .filter(([key, value]) => 
+              !excludedKeys.includes(key) && 
+              value && 
+              value.toString().trim() !== '' &&
+              value !== 'null' &&
+              value !== 'undefined'
+            )
+            .map(([key, value]) => (
+              <div key={key} className="flex items-center border-b border-gray-700/50 last:border-0">
+                <div className="w-1/3 p-4 bg-gray-800/50">
+                  <span className="text-gray-400 text-sm">
+                    {key.replace(/([A-Z])/g, " $1").trim()}
+                  </span>
+                </div>
+                <div className="w-2/3 p-4">
+                  <span className="text-white">
+                    {typeof value === 'boolean' 
+                      ? (value ? 'Yes' : 'No') 
+                      : value.toString()}
+                  </span>
+                </div>
+              </div>
+            ))}
+        </div>
+      </div>
     );
   };
 
@@ -375,8 +437,7 @@ export default function DetailedPostPage() {
     return votes > 0 ? `+${votes}` : `${votes}`;
   };
 
-  const renderPartAttribute = (key, value) => {
-  
+  const renderPartAttribute = (part, key, value) => {
     if (key.endsWith('Value')) {
       const dimensionType = key.replace('Value', '');
       const unitValue = part[`${dimensionType}Unit`];
@@ -388,284 +449,364 @@ export default function DetailedPostPage() {
   };
 
   return (
-    <div className="container mx-auto p-6 bg-gray-900 text-white min-h-screen">
-      <div className="max-w-4xl mx-auto bg-gray-800 p-6 rounded-lg shadow-md">
-        {/* Profile Picture and Username */}
-        <div className="flex items-center mb-4">
-          <img
-            src={profilePicture}
-            alt={`${username}'s profile`}
-            className="w-14 h-14 rounded-full mr-3 object-cover"
-          />
-          <Link href={`/profile/${post.userId}`} className="text-teal-400 text-lg font-bold hover:underline">
-            {username || "Unknown User"}
-          </Link>
-        </div>
-
-        <div className="flex items-center gap-4 mb-6">
-          <h1 className="text-3xl font-bold">{post.title}</h1>
-          {post.isSolved && (
-            <span className="bg-green-500 text-white px-3 py-1 rounded-full text-sm">
-              Solved
-            </span>
-          )}
-        </div>
-
-        {/* Main Content */}
-        <div className="flex flex-wrap lg:flex-nowrap gap-6">
-          <div className="w-full lg:w-2/3">
-            <p className="mb-6 text-gray-300">{post.description}</p>
-            {post.imageUrls && post.imageUrls.length > 0 && (
-              <div className="mb-6">
-                <h3 className="text-xl font-bold mb-2">Images</h3>
-                <div className="grid grid-cols-2 gap-4">
-                  {post.imageUrls.map((url, index) => (
-                    <img
-                      key={index}
-                      src={`http://localhost:8080/${url.split("/").pop()}`}
-                      alt={`Post Image ${index + 1}`}
-                      className="w-full h-auto rounded-lg cursor-pointer"
-                      onClick={() => handleImageClick(`http://localhost:8080/${url.split("/").pop()}`)}
-                    />
-                  ))}
-                </div>
+    <div className="container mx-auto p-4 bg-gray-900 text-white min-h-screen">
+      <div className="max-w-[1400px] mx-auto">
+        {/* Header Section */}
+        <div className="bg-gray-800 rounded-lg p-6 mb-4 shadow-lg">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-3">
+              <img
+                src={profilePicture}
+                alt={`${username}'s profile`}
+                className="w-10 h-10 rounded-full object-cover"
+              />
+              <div>
+                <Link href={`/profile/${post.userId}`} className="text-teal-400 font-medium hover:underline">
+                  {username || "Unknown User"}
+                </Link>
               </div>
-            )}
-          </div>
-
-          <div className="w-full lg:w-1/3">
-            {/* Tab Selection */}
-            <div className="flex mb-4">
-              <button
-                className={`px-4 py-2 rounded-t-lg ${
-                  activeTab === "details"
-                    ? "bg-gray-700 text-white"
-                    : "bg-gray-800 text-gray-400 hover:text-white"
-                }`}
-                onClick={() => setActiveTab("details")}
-              >
-                General
-              </button>
-              <button
-                className={`px-4 py-2 rounded-t-lg ${
-                  activeTab === "parts"
-                    ? "bg-gray-700 text-white"
-                    : "bg-gray-800 text-gray-400 hover:text-white"
-                }`}
-                onClick={() => setActiveTab("parts")}
-              >
-                Parts
-              </button>
             </div>
-
-            {/* Tab Content */}
-            {activeTab === "details" ? (
-              <>
-                <h3 className="text-xl font-bold mb-4">Details</h3>
-                <table className="w-full text-left border-collapse border border-gray-700">
-                  <tbody>
-                    {renderAttributes()}
-                  </tbody>
-                </table>
-              </>
-            ) : (
-              <>
-                <h3 className="text-xl font-bold mb-4">Parts</h3>
-                {post.parts && post.parts.length > 0 ? (
-                  post.parts.map((part, index) => (
-                    <div key={index} className="mb-6">
-                      <h4 className="text-lg font-bold text-teal-400 mb-2">
-                        {part.partName || `Part ${index + 1}`}
-                      </h4>
-                      <table className="w-full text-left border-collapse border border-gray-700">
-                        <tbody>
-                          {(part.widthValue || part.heightValue || part.depthValue) && (
-                            <tr className="border-b border-gray-700">
-                              <td className="py-2 px-2 font-bold text-gray-300">Dimensions</td>
-                              <td className="py-2 px-2 text-gray-400">
-                                {[
-                                  part.widthValue && `Width: ${part.widthValue}${part.widthUnit ? ` ${part.widthUnit}` : ''}`,
-                                  part.heightValue && `Height: ${part.heightValue}${part.heightUnit ? ` ${part.heightUnit}` : ''}`,
-                                  part.depthValue && `Depth: ${part.depthValue}${part.depthUnit ? ` ${part.depthUnit}` : ''}`
-                                ].filter(Boolean).join(' × ')}
-                              </td>
-                            </tr>
-                          )}
-                          {Object.entries(part)
-                            .filter(([key, value]) => 
-                              value !== null && 
-                              value !== undefined && 
-                              value !== '' && 
-                              key !== 'partName' &&
-                              !key.includes('width') &&
-                              !key.includes('height') &&
-                              !key.includes('depth') &&
-                              !key.includes('size') && 
-                              !key.includes('weight')
-                            )
-                            .map(([key, value]) => (
-                              <tr key={key} className="border-b border-gray-700">
-                                <td className="py-2 px-2 font-bold text-gray-300 capitalize">
-                                  {key.replace(/([A-Z])/g, ' $1').trim()}
-                                </td>
-                                <td className="py-2 px-2 text-gray-400">
-                                  {typeof value === 'boolean' ? (value ? 'Yes' : 'No') : value}
-                                </td>
-                              </tr>
-                            ))}
-                          {part.weightValue && part.weightValue.trim() !== '' && (
-                            <tr className="border-b border-gray-700">
-                              <td className="py-2 px-2 font-bold text-gray-300">Weight</td>
-                              <td className="py-2 px-2 text-gray-400">
-                                {`${part.weightValue}${part.weightUnit ? ` ${part.weightUnit}` : ''}`}
-                              </td>
-                            </tr>
-                          )}
-                        </tbody>
-                      </table>
-                    </div>
-                  ))
-                ) : (
-                  <div className="py-4 px-2 text-gray-400 text-center bg-gray-700 rounded-lg">
-                    No parts information available
-                  </div>
-                )}
-              </>
-            )}
-
-            {post.tags && post.tags.length > 0 && (
-              <div className="mt-6">
-                <h3 className="text-xl font-bold mb-2">Tags</h3>
-                <div className="flex flex-wrap gap-2">
-                  {post.tags.map((tag, index) => (
-                    <span key={index} className="bg-teal-600 text-white px-3 py-1 rounded-full">
-                      {tag}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Votes */}
-        <div className="mt-8">
-          <div className="flex items-center gap-6">
-            <button
-              onClick={() => handleVote("upvote")}
-              className={`p-2 rounded-md transition-colors duration-200 ${
-                userVote === "upvote"
-                  ? "bg-teal-600 text-white" 
-                  : "bg-gray-700 hover:bg-teal-500 text-teal-400 hover:text-white"
-              }`}
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-6 w-6"
-                viewBox="0 0 20 20"
-                fill="currentColor"
-              >
-                <path
-                  fillRule="evenodd"
-                  d="M3.293 9.707a1 1 0 010-1.414l6-6a1 1 0 011.414 0l6 6a1 1 0 01-1.414 1.414L11 5.414V17a1 1 0 11-2 0V5.414L4.707 9.707a1 1 0 01-1.414 0z"
-                  clipRule="evenodd"
-                />
-              </svg>
-            </button>
             
-            <div className="min-w-[50px] text-center">
-              <span className={`text-xl font-bold ${
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => handleVote("upvote")}
+                className={`p-1.5 rounded-md ${
+                  userVote === "upvote"
+                    ? "bg-teal-600 text-white" 
+                    : "bg-gray-700 hover:bg-teal-500 text-teal-400 hover:text-white"
+                }`}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M3.293 9.707a1 1 0 010-1.414l6-6a1 1 0 011.414 0l6 6a1 1 0 01-1.414 1.414L11 5.414V17a1 1 0 11-2 0V5.414L4.707 9.707a1 1 0 01-1.414 0z" clipRule="evenodd" />
+                </svg>
+              </button>
+              
+              <span className={`font-medium ${
                 post.votes > 0 ? 'text-teal-400' : 
                 post.votes < 0 ? 'text-red-400' : 
                 'text-gray-400'
               }`}>
                 {formatVotes(post.votes)}
               </span>
-            </div>
 
-            <button
-              onClick={() => handleVote("downvote")}
-              className={`p-2 rounded-md transition-colors duration-200 ${
-                userVote === "downvote"
-                  ? "bg-red-600 text-white"
-                  : "bg-gray-700 hover:bg-red-500 text-red-400 hover:text-white"
-              }`}
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-6 w-6"
-                viewBox="0 0 20 20"
-                fill="currentColor"
-              >
-                <path
-                  fillRule="evenodd"
-                  d="M16.707 10.293a1 1 0 010 1.414l-6 6a1 1 0 01-1.414 0l-6-6a1 1 0 111.414-1.414L9 14.586V3a1 1 0 012 0v11.586l4.293-4.293a1 1 0 011.414 0z"
-                  clipRule="evenodd"
-                />
-              </svg>
-            </button>
-          </div>
-        </div>
-
-        {/* Login Warning */}
-        {loginWarning && (
-          <div className="fixed top-4 right-4 bg-red-500 text-white px-6 py-3 rounded-md shadow-lg animate-fade-in">
-            Please log in to vote
-          </div>
-        )}
-
-        {/* Updated comments section */}
-        <div className="mt-8">
-          <h3 className="text-xl font-bold mb-4">Comments</h3>
-          {comments && comments.length > 0 ? (
-            comments.filter(comment => !comment.parentCommentId).map(comment => renderComment(comment))
-          ) : (
-            <p className="text-gray-400">No comments yet. Be the first to comment!</p>
-          )}
-
-          {user && (
-            <div className="mt-6">
-              <textarea
-                className="w-full p-2 rounded bg-gray-800 text-white mb-4"
-                rows="4"
-                value={newComment}
-                onChange={(e) => setNewComment(e.target.value)}
-                placeholder="Add your comment..."
-              ></textarea>
               <button
-                onClick={() => handleCommentSubmit()}
-                className="bg-teal-500 hover:bg-teal-600 text-white px-4 py-2 rounded-md"
+                onClick={() => handleVote("downvote")}
+                className={`p-1.5 rounded-md ${
+                  userVote === "downvote"
+                    ? "bg-red-600 text-white"
+                    : "bg-gray-700 hover:bg-red-500 text-red-400 hover:text-white"
+                }`}
               >
-                Submit Comment
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M16.707 10.293a1 1 0 010 1.414l-6 6a1 1 0 01-1.414 0l-6-6a1 1 0 111.414-1.414L9 14.586V3a1 1 0 012 0v11.586l4.293-4.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                </svg>
               </button>
             </div>
+          </div>
+
+          <h1 className="text-2xl font-bold mb-2 flex items-center gap-3">
+            {post.title}
+            {post.isSolved && (
+              <span className="bg-green-500/20 text-green-400 px-2 py-0.5 rounded-full text-sm font-normal">
+                Solved
+              </span>
+            )}
+          </h1>
+
+          <p className="text-gray-300 mb-4">{post.description}</p>
+
+          {/* Tags */}
+          {post.tags && post.tags.length > 0 && (
+            <div className="flex flex-wrap gap-2 mb-4">
+              {post.tags.map((tag, index) => {
+                const tagInfo = tagDetails[tag];
+                return (
+                  <div key={`tag-${index}`} className="relative group">
+                    <a
+                      href={tagInfo?.wikipediaUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={`bg-gray-700 text-teal-400 px-2 py-1 rounded-full text-sm 
+                        hover:bg-gray-600 transition-colors inline-flex items-center gap-1
+                        ${!tagInfo ? 'opacity-50' : 'cursor-pointer'}`}
+                    >
+                      {tagInfo?.label || tag}
+                      {!tagInfo && (
+                        <div className="w-3 h-3 border-t-2 border-teal-400 animate-spin rounded-full"></div>
+                      )}
+                    </a>
+                    
+                    {/* Tooltip */}
+                    {tagInfo?.description && (
+                      <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-800 text-white text-sm rounded-lg shadow-lg w-64 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-50">
+                        {tagInfo.description}
+                        <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-1/2 rotate-45 w-2 h-2 bg-gray-800"></div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
           )}
+        </div>
+        <div className="flex flex-col lg:flex-row gap-6">
+          <div className="flex-1">
+            {post.imageUrls && post.imageUrls.length > 0 && (
+              <div className="bg-gray-800 rounded-lg overflow-hidden shadow-lg mb-6">
+                <div className="relative aspect-[16/9]">
+                  <img
+                    src={`http://localhost:8080/${post.imageUrls[currentImageIndex].split("/").pop()}`}
+                    alt={`Post Image ${currentImageIndex + 1}`}
+                    className="w-full h-full object-contain bg-gray-900"
+                    onClick={handleImageClick}
+                  />
+                  
+                  {post.imageUrls.length > 1 && (
+                    <>
+                      {/* Navigation Arrows */}
+                      <button
+                        onClick={previousImage}
+                        className="absolute left-4 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/75 text-white p-2 rounded-full backdrop-blur-sm transition-all"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                        </svg>
+                      </button>
+                      <button
+                        onClick={nextImage}
+                        className="absolute right-4 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/75 text-white p-2 rounded-full backdrop-blur-sm transition-all"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                        </svg>
+                      </button>
+
+                      {/* Image Counter */}
+                      <div className="absolute bottom-4 right-4 bg-black/50 text-white px-3 py-1 rounded-full text-sm backdrop-blur-sm">
+                        {currentImageIndex + 1} / {post.imageUrls.length}
+                      </div>
+                    </>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Comments Section */}
+            <div className="bg-gray-800 rounded-lg shadow-lg overflow-hidden">
+              <div className="p-4 border-b border-gray-700">
+                <h3 className="text-lg font-bold flex items-center gap-2">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-teal-400" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M18 10c0 3.866-3.582 7-8 7a8.841 8.841 0 01-4.083-.98L2 17l1.338-3.123C2.493 12.767 2 11.434 2 10c0-3.866 3.582-7 8-7s8 3.134 8 7zM7 9H5v2h2V9zm8 0h-2v2h2V9zM9 9h2v2H9V9z" clipRule="evenodd" />
+                  </svg>
+                  Comments ({comments.length})
+                </h3>
+              </div>
+              {user ? (
+                <div className="p-4 border-b border-gray-700 bg-gray-750">
+                  <div className="flex gap-3">
+                    <img
+                      src={user.profilePicture || "https://www.gravatar.com/avatar/default?d=mp"}
+                      alt="Your profile"
+                      className="w-10 h-10 rounded-full object-cover"
+                    />
+                    <div className="flex-1">
+                      <textarea
+                        value={newComment}
+                        onChange={(e) => setNewComment(e.target.value)}
+                        placeholder="Add a comment..."
+                        className="w-full bg-gray-700 rounded-lg p-3 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-teal-500"
+                        rows="3"
+                      />
+                      {error && <div className="text-red-400 text-sm mt-2">{error}</div>}
+                      <div className="mt-2 flex justify-end">
+                        <button
+                          onClick={() => handleCommentSubmit()}
+                          className="bg-teal-500 hover:bg-teal-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                        >
+                          Post Comment
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="p-4 text-center text-gray-400 border-b border-gray-700">
+                  Please <Link href="/login" className="text-teal-400 hover:underline">login</Link> to comment
+                </div>
+              )}
+
+              {/* Comments List */}
+              <div className="divide-y divide-gray-700">
+                {comments.length > 0 ? (
+                  comments.map((comment) => (
+                    <div key={`comment-${comment.id}`} className={`p-4 ${
+                      comment.id === post.solutionCommentId ? 'ring-2 ring-green-500/50 bg-green-500/5' : ''
+                    }`}>
+                      {renderComment(comment)}
+                    </div>
+                  ))
+                ) : (
+                  <div className="p-8 text-center text-gray-400">
+                    No comments yet. Be the first to comment!
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          <div className="lg:w-80 xl:w-96">
+            <div className="bg-gray-800 rounded-lg shadow-lg sticky top-4">
+              {/* Main Tabs */}
+              <div className="flex border-b border-gray-700">
+                <button
+                  className={`flex-1 py-3 text-sm font-medium ${
+                    activeTab === "details"
+                      ? "text-teal-400 border-b-2 border-teal-400"
+                      : "text-gray-400 hover:text-white"
+                  }`}
+                  onClick={() => setActiveTab("details")}
+                >
+                  Details
+                </button>
+                {post.parts && post.parts.length > 0 && (
+                  <button
+                    className={`flex-1 py-3 text-sm font-medium ${
+                      activeTab === "parts"
+                        ? "text-teal-400 border-b-2 border-teal-400"
+                        : "text-gray-400 hover:text-white"
+                    }`}
+                    onClick={() => setActiveTab("parts")}
+                  >
+                    Parts
+                  </button>
+                )}
+              </div>
+
+              {/* Content Area */}
+              <div className="p-4">
+                {activeTab === "details" ? (
+                  <div className="space-y-2">
+                    {renderAttributes()}
+                  </div>
+                ) : (
+                  <div>
+                    {/* Part Tabs */}
+                    {post.parts && post.parts.length > 0 && (
+                      <>
+                        <div className="flex overflow-x-auto scrollbar-hide mb-4 -mx-4 px-4 border-b border-gray-700">
+                          {post.parts.map((part, index) => (
+                            <button
+                              key={index}
+                              onClick={() => setActivePartIndex(index)}
+                              className={`px-4 py-2 text-sm font-medium whitespace-nowrap ${
+                                activePartIndex === index
+                                  ? "text-teal-400 border-b-2 border-teal-400"
+                                  : "text-gray-400 hover:text-white"
+                              }`}
+                            >
+                              {part.name || `Part ${index + 1}`}
+                            </button>
+                          ))}
+                        </div>
+
+                        {/* Active Part Content */}
+                        {post.parts[activePartIndex] && (
+                          <div className="space-y-4">
+                            {Object.entries(post.parts[activePartIndex])
+                              .filter(([key, value]) => 
+                                !key.endsWith('Unit') && 
+                                key !== 'id' && 
+                                key !== 'name' &&  // Exclude name from table
+                                value && 
+                                value.toString().trim() !== '' &&
+                                value !== 'null' &&
+                                value !== 'undefined'
+                              )
+                              .map(([key, value]) => (
+                                <div key={key} className="flex items-center border-b border-gray-700/50 last:border-0">
+                                  <div className="w-1/3 p-4 bg-gray-800/50">
+                                    <span className="text-gray-400 text-sm">
+                                      {key.replace(/([A-Z])/g, " $1").trim()}
+                                    </span>
+                                  </div>
+                                  <div className="w-2/3 p-4">
+                                    <span className="text-white">
+                                      {renderPartAttribute(post.parts[activePartIndex], key, value)}
+                                    </span>
+                                  </div>
+                                </div>
+                              ))}
+                          </div>
+                        )}
+                      </>
+                    )}
+
+                    {(!post.parts || post.parts.length === 0) && (
+                      <div className="text-center text-gray-400 py-8">
+                        No parts information available
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Fullscreen Image Modal */}
-      {fullscreenImage && (
-        <div
-          className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50"
-          onClick={closeFullscreenImage}
+      {/* Fullscreen Modal */}
+      {isFullscreen && (
+        <div 
+          className="fixed inset-0 bg-black z-50 flex items-center justify-center"
+          onClick={closeFullscreen}
         >
-          <img
-            src={fullscreenImage}
-            alt="Fullscreen"
-            className="max-w-full max-h-full object-contain rounded-md"
-          />
+          <button 
+            className="absolute top-4 right-4 text-white/70 hover:text-white z-50 p-2"
+            onClick={closeFullscreen}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+
+          {/* Main Image */}
+          <div className="relative w-full h-full flex items-center justify-center">
+            <img 
+              src={`http://localhost:8080/${post.imageUrls[currentImageIndex].split("/").pop()}`}
+              alt="Fullscreen view"
+              className="max-w-[90vw] max-h-[90vh] object-contain"
+              onClick={(e) => e.stopPropagation()} 
+            />
+
+            {post.imageUrls.length > 1 && (
+              <>
+                {/* Navigation Arrows */}
+                <button
+                  onClick={handleFullscreenPrevious}
+                  className="absolute left-4 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/75 text-white p-4 rounded-full backdrop-blur-sm transition-all"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                  </svg>
+                </button>
+                <button
+                  onClick={handleFullscreenNext}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/75 text-white p-4 rounded-full backdrop-blur-sm transition-all"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </button>
+
+                {/* Image Counter */}
+                <div className="absolute bottom-4 right-4 bg-black/50 text-white px-4 py-2 rounded-full text-sm backdrop-blur-sm">
+                  {currentImageIndex + 1} / {post.imageUrls.length}
+                </div>
+              </>
+            )}
+          </div>
         </div>
       )}
-
-      <style jsx>{`
-        @keyframes fade-in {
-          from { opacity: 0; transform: translateY(-20px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-        .animate-fade-in {
-          animation: fade-in 0.3s ease-out;
-        }
-      `}</style>
     </div>
   );
 }

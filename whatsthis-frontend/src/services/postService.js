@@ -84,6 +84,16 @@ const toggleSolution = async (postId, commentId, isRemoving) => {
   }
 };
 
+const getTagDetails = async (tagId) => {
+  try {
+    const response = await axiosInstance.get(`/tags/search?query=${tagId}`);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching tag details:', error);
+    throw error;
+  }
+};
+
 export default {
   getAllPosts,
   getPostById,
@@ -92,4 +102,5 @@ export default {
   getUserVote,
   searchPosts,
   toggleSolution,
+  getTagDetails,
 };

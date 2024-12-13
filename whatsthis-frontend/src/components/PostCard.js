@@ -100,10 +100,10 @@ const PostCard = ({ post }) => {
 
           {/* Votes and Comments */}
           <div className="flex justify-between items-center mt-auto px-4 pb-4">
-            <div className="flex items-center gap-1 -ml-1">
+            <div className="flex items-center gap-2">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
-                className="h-3 w-3 text-gray-500"
+                className="h-4 w-4 text-gray-500"
                 viewBox="0 0 20 20"
                 fill="currentColor"
               >
@@ -113,7 +113,7 @@ const PostCard = ({ post }) => {
                   clipRule="evenodd"
                 />
               </svg>
-              <span className={`font-bold text-sm ${
+              <span className={`font-bold text-base ${
                 post.votes > 0 ? 'text-teal-400' : 
                 post.votes < 0 ? 'text-red-400' : 
                 'text-gray-400'
@@ -122,7 +122,7 @@ const PostCard = ({ post }) => {
               </span>
               <svg
                 xmlns="http://www.w3.org/2000/svg"
-                className="h-3 w-3 text-gray-500"
+                className="h-4 w-4 text-gray-500"
                 viewBox="0 0 20 20"
                 fill="currentColor"
               >
@@ -133,10 +133,10 @@ const PostCard = ({ post }) => {
                 />
               </svg>
             </div>
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-2">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
-                className="h-5 w-5 text-gray-400"
+                className="h-6 w-6 text-gray-400"
                 viewBox="0 0 20 20"
                 fill="currentColor"
               >
@@ -146,7 +146,7 @@ const PostCard = ({ post }) => {
                   clipRule="evenodd"
                 />
               </svg>
-              <span className="text-gray-400 font-bold text-sm">
+              <span className="text-gray-400 font-bold text-base">
                 {commentCount}
               </span>
             </div>

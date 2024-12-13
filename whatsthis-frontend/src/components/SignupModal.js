@@ -14,8 +14,6 @@ const SignupModal = ({ onClose }) => {
   const handleSignup = async () => {
     setError('');
     setIsLoading(true);
-
-    // Basic validation
     if (password.length < 6) {
       setError('Password must be at least 6 characters long');
       setIsLoading(false);
@@ -40,10 +38,7 @@ const SignupModal = ({ onClose }) => {
       if (!response.ok) {
         throw new Error(data.error || 'Failed to create account');
       }
-
-      // Show success message before closing
       setError('');
-      // Automatically log in after successful signup
       const loginResponse = await fetch('http://localhost:8080/api/users/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

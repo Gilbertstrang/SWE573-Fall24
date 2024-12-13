@@ -420,7 +420,7 @@ const CreatePostPage = () => {
     const updatedParts = [...parts];
     updatedParts[index] = {
       ...updatedParts[index],
-      partName: newName || `Part ${index + 1}`
+      partName: newName || `Part ${index + 1}` 
     };
     setParts(updatedParts);
     setEditingPartName(null);
@@ -440,7 +440,6 @@ const CreatePostPage = () => {
             )}
           </div>
 
-          {/* Form Section */}
           <form onSubmit={handleSubmit} className="space-y-8">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               <div className="lg:col-span-3">
@@ -477,7 +476,6 @@ const CreatePostPage = () => {
 
             {/* Parts Navigation and Content */}
             <div className="bg-gray-800 rounded-lg border border-gray-700 mb-8">
-              {/* Header - Now with proper connection to content */}
               <div className="px-6 pt-6">
                 <div className="flex justify-between items-center">
                   <div className="flex space-x-2">
@@ -553,6 +551,8 @@ const CreatePostPage = () => {
                   </button>
                 </div>
               </div>
+
+              {/* Content Area */}
               <div className="bg-gray-700 p-6">
                 {activePartIndex === null ? (
                   <div>
@@ -560,6 +560,7 @@ const CreatePostPage = () => {
                       <div className="lg:col-span-3 bg-gray-700 p-6 rounded-lg">
                         <h3 className="text-lg font-semibold mb-4">Dimensions</h3>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                          {/* Width */}
                           <div className="flex gap-2">
                             <div className="flex-1">
                               <input
@@ -582,6 +583,8 @@ const CreatePostPage = () => {
                               ))}
                             </select>
                           </div>
+
+                          {/* Height */}
                           <div className="flex gap-2">
                             <div className="flex-1">
                               <input
@@ -604,6 +607,8 @@ const CreatePostPage = () => {
                               ))}
                             </select>
                           </div>
+
+                          {/* Depth */}
                           <div className="flex gap-2">
                             <div className="flex-1">
                               <input
@@ -626,6 +631,8 @@ const CreatePostPage = () => {
                               ))}
                             </select>
                           </div>
+
+                          {/* Weight */}
                           <div className="flex gap-2">
                             <div className="flex-1">
                               <input
@@ -761,6 +768,7 @@ const CreatePostPage = () => {
                       <div className="lg:col-span-3 bg-gray-700 p-6 rounded-lg">
                         <h3 className="text-lg font-semibold mb-4">Part Dimensions</h3>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                          {/* Width */}
                           <div className="flex gap-2">
                             <div className="flex-1">
                               <input
@@ -781,6 +789,8 @@ const CreatePostPage = () => {
                               ))}
                             </select>
                           </div>
+
+                          {/* Height */}
                           <div className="flex gap-2">
                             <div className="flex-1">
                               <input
@@ -801,6 +811,8 @@ const CreatePostPage = () => {
                               ))}
                             </select>
                           </div>
+
+                          {/* Depth */}
                           <div className="flex gap-2">
                             <div className="flex-1">
                               <input
@@ -821,6 +833,8 @@ const CreatePostPage = () => {
                               ))}
                             </select>
                           </div>
+
+                          {/* Weight */}
                           <div className="flex gap-2">
                             <div className="flex-1">
                               <input

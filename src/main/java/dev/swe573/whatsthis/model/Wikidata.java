@@ -19,6 +19,8 @@ public class Wikidata {
         @JsonProperty("url")
         private String wikiUrl;
 
+        private String wikipediaUrl;
+
 //        public String getWikiUrl() {
 //            return wikiUrlWrapper != null ? wikiUrlWrapper.getWikiUrl() : null;
 //        }
