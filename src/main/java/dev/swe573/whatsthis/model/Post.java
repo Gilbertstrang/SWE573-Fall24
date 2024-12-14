@@ -60,14 +60,13 @@ public class Post {
 
     private int votes = 0;
 
-//    TODO: Figure the TIME out.
-//    @Column(name = "createdAt")
-//    LocalDateTime createdAt;
-//
-//    @PrePersist
-//    protected void onCreate() {
-//        createdAt = LocalDateTime.now();
-//    }
+    @Column(name = "created_at")
+    private LocalDateTime createdAt;
+
+    @PrePersist
+    protected void onCreate() {
+        createdAt = LocalDateTime.now();
+    }
 
     @ElementCollection
     @CollectionTable(name = "post_tags", joinColumns = @JoinColumn(name = "post_id"))

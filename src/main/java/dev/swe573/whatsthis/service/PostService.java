@@ -14,10 +14,13 @@ import dev.swe573.whatsthis.repository.CommentRepo;
 import dev.swe573.whatsthis.repository.PostRepo;
 import dev.swe573.whatsthis.repository.UserRepo;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.concurrent.ConcurrentHashMap;
@@ -61,10 +64,9 @@ public class PostService {
     @Transactional
     public PostDto newPost(PostDto postDto) {
         Post post = toEntity(postDto);
-        System.out.println("Parts before saving: " + post.getParts());
-        post = postRepo.save(post);
-        System.out.println("Parts after saving: " + post.getParts());
-        return toDto(post);
+        post.setCreatedAt(LocalDateTime.now());
+        Post savedPost = postRepo.save(post);
+        return toDto(savedPost);
     }
 
     private Post toEntity(PostDto postDto) {
@@ -104,6 +106,7 @@ public class PostService {
         post.setWidthValue(postDto.getWidthValue());
         post.setWidthUnit(postDto.getWidthUnit());
 
+        post.setCreatedAt(postDto.getCreatedAt());
 
         post.setTags(postDto.getTags() != null ? postDto.getTags() : new ArrayList<>());
 
@@ -193,6 +196,7 @@ public class PostService {
         postDto.setWidthUnit(post.getWidthUnit());
 
         postDto.setComments(new ArrayList<>());
+        postDto.setCreatedAt(post.getCreatedAt());
 
         postDto.setTags(post.getTags() != null ? post.getTags() : new ArrayList<>());
 
@@ -238,6 +242,7 @@ public class PostService {
 
         postDto.setSolutionCommentId(post.getSolutionCommentId());
         postDto.setSolved(post.isSolved());
+        postDto.setCreatedAt(post.getCreatedAt());
 
         return postDto;
     }
@@ -279,6 +284,7 @@ public class PostService {
         existingPost.setDepthUnit(postDto.getDepthUnit());
         existingPost.setWidthValue(postDto.getWidthValue());
         existingPost.setWidthUnit(postDto.getWidthUnit());
+        existingPost.setCreatedAt(postDto.getCreatedAt());
 
         existingPost = postRepo.save(existingPost);
         return toDto(existingPost);
@@ -414,5 +420,25 @@ public class PostService {
         return searchResults.stream()
             .map(this::toDto)
             .collect(Collectors.toList());
+    }
+
+    public Page<PostDto> getPaginatedPosts(Pageable pageable) {
+        return postRepo.findAll(pageable).map(this::toDto);
+    }
+
+    public Page<PostDto> findAllByOrderByVotesDesc(Pageable pageable) {
+        return postRepo.findAllByOrderByVotesDesc(pageable).map(this::toDto);
+    }
+
+    public Page<PostDto> findAllByIsSolvedTrue(Pageable pageable) {
+        return postRepo.findAllByIsSolvedTrue(pageable).map(this::toDto);
+    }
+
+    public Page<PostDto> findAllByIsSolvedFalse(Pageable pageable) {
+        return postRepo.findAllByIsSolvedFalse(pageable).map(this::toDto);
+    }
+
+    public Page<PostDto> findAllByOrderByCreatedAtDesc(Pageable pageable) {
+        return postRepo.findAllByOrderByCreatedAtDesc(pageable).map(this::toDto);
     }
 }

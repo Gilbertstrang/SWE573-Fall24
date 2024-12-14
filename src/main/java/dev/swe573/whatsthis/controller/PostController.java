@@ -8,6 +8,9 @@ import dev.swe573.whatsthis.service.PostService;
 import dev.swe573.whatsthis.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ClassPathResource;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.hateoas.CollectionModel;
 import org.springframework.hateoas.EntityModel;
 import org.springframework.http.HttpStatus;
@@ -42,15 +45,8 @@ public class PostController {
 
     //Get all posts
     @GetMapping
-    public CollectionModel<EntityModel<PostDto>> all() {
-        List<EntityModel<PostDto>> posts = postService.all().stream()
-                .map(postDto -> EntityModel.of(postDto,
-                        linkTo(methodOn(PostController.class).one(postDto.getId())).withSelfRel(),
-                        linkTo(methodOn(PostController.class).all()).withRel("all-posts"),
-                        linkTo(methodOn(PostController.class).getCommentsByPost(postDto.getId())).withRel("comments")
-                )).collect(Collectors.toList());
-
-        return CollectionModel.of(posts, linkTo(methodOn(PostController.class).all()).withSelfRel());
+    public Page<PostDto> all() {
+        return postService.getPaginatedPosts(PageRequest.of(0, 12, Sort.by(Sort.Direction.DESC, "createdAt")));
     }
 
     //Get a post by id
@@ -165,5 +161,26 @@ public class PostController {
     public ResponseEntity<List<PostDto>> searchPosts(@RequestParam Map<String, String> searchParams) {
         List<PostDto> results = postService.searchPosts(searchParams);
         return ResponseEntity.ok(results);
+    }
+
+    @GetMapping("/paginated")
+    public Page<PostDto> getPaginatedPosts(
+        @RequestParam(defaultValue = "0") int page,
+        @RequestParam(defaultValue = "12") int size,
+        @RequestParam(defaultValue = "newest") String sort
+    ) {
+        PageRequest pageRequest = PageRequest.of(page, size);
+        
+        switch (sort) {
+            case "mostVoted":
+                return postService.findAllByOrderByVotesDesc(pageRequest);
+            case "solved":
+                return postService.findAllByIsSolvedTrue(pageRequest);
+            case "unsolved":
+                return postService.findAllByIsSolvedFalse(pageRequest);
+            case "newest":
+            default:
+                return postService.findAllByOrderByCreatedAtDesc(pageRequest);
+        }
     }
 }

@@ -31,6 +31,15 @@ const PostCard = ({ post }) => {
     return votes > 0 ? `+${votes}` : `${votes}`;
   };
 
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
+  };
+
   return (
     <Link href={`/posts/${post.id}`} passHref>
       <div className="bg-gray-800 text-white rounded-lg shadow-lg overflow-hidden cursor-pointer transform transition-transform duration-300 hover:scale-105 w-full h-[500px] flex flex-col relative">
@@ -66,18 +75,23 @@ const PostCard = ({ post }) => {
             {post.description}
           </p>
 
-          {/* Username */}
-          <p className="text-teal-400 text-sm mt-2 truncate">
-            <span 
-              onClick={(e) => {
-                e.preventDefault();
-                window.location.href = `/profile/${post.userId}`;
-              }}
-              className="hover:underline cursor-pointer"
-            >
-              {username}
-            </span>
-          </p>
+          {/* Username and Date */}
+          <div className="flex justify-between items-center text-sm mt-2">
+            <p className="text-teal-400 truncate">
+              <span 
+                onClick={(e) => {
+                  e.preventDefault();
+                  window.location.href = `/profile/${post.userId}`;
+                }}
+                className="hover:underline cursor-pointer"
+              >
+                {username}
+              </span>
+            </p>
+            <p className="text-gray-400">
+              {post.createdAt && formatDate(post.createdAt)}
+            </p>
+          </div>
 
           {/* Tags */}
           {post.tags && post.tags.length > 0 && (

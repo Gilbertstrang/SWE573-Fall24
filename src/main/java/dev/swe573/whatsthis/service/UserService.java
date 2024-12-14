@@ -72,10 +72,22 @@ public class UserService implements UserDetailsService{
         User user = userRepo.findById(id)
                 .orElseThrow(() -> new UserNotFoundException(id));
 
-        user.setUsername(userDto.getUsername());
-        user.setEmail(userDto.getEmail());
-        user.setPassword(userDto.getPassword());// DANGEROUS TO PUT PASSWORD LIKE THIS MY MAN
-        // WE GOING TO SECURE IT LATER :(
+        // Only update non-sensitive fields
+        if (userDto.getUsername() != null) {
+            user.setUsername(userDto.getUsername());
+        }
+        if (userDto.getEmail() != null) {
+            user.setEmail(userDto.getEmail());
+        }
+        if (userDto.getBio() != null) {
+            user.setBio(userDto.getBio());
+        }
+        if (userDto.getProfilePictureUrl() != null) {
+            user.setProfilePictureUrl(userDto.getProfilePictureUrl());
+        }
+        // Don't update password here
+        // Don't update roles here
+        // Don't update createdAt here
 
         User updatedUser = userRepo.save(user);
         return toDto(updatedUser);
@@ -101,8 +113,11 @@ public class UserService implements UserDetailsService{
         User user = new User();
         user.setUsername(userDto.getUsername());
         user.setEmail(userDto.getEmail());
-        user.setPassword(user.getPassword());// DONT FORGET TO SECURE PASSWORD
+        user.setPassword(user.getPassword());
         user.setRoles(userDto.getRoles());
+        user.setBio(userDto.getBio());
+        user.setProfilePictureUrl(userDto.getProfilePictureUrl());
+        user.setCreatedAt(userDto.getCreatedAt());
         return user;
     }
 

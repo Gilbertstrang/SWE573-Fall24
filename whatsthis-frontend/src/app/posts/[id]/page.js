@@ -54,7 +54,11 @@ export default function DetailedPostPage() {
         if (userRes.ok) {
           const userData = await userRes.json();
           setUsername(userData.username);
-          setProfilePicture(userData.profilePicture || "https://www.gravatar.com/avatar/default?d=mp");
+          setProfilePicture(
+            userData.profilePictureUrl 
+              ? `http://localhost:8080${userData.profilePictureUrl}` 
+              : "https://www.gravatar.com/avatar/default?d=mp"
+          );
         }
 
         const fetchedComments = await commentService.getCommentsByPostId(id);
@@ -66,7 +70,9 @@ export default function DetailedPostPage() {
               return {
                 ...comment,
                 commenterUsername: userData.username,
-                profilePicture: userData.profilePicture || "https://www.gravatar.com/avatar/default?d=mp"
+                profilePicture: userData.profilePictureUrl 
+                  ? `http://localhost:8080${userData.profilePictureUrl}` 
+                  : "https://www.gravatar.com/avatar/default?d=mp"
               };
             } catch (error) {
               console.error(`Error fetching user data for comment ${comment.id}:`, error);
@@ -78,23 +84,11 @@ export default function DetailedPostPage() {
             }
           })
         );
-
-        const sortedComments = commentsWithUserData.sort((a, b) => {
-          if (a.id === fetchedPost.solutionCommentId) return -1;
-          if (b.id === fetchedPost.solutionCommentId) return 1;
-          return 0;
-        });
-
-        setComments(sortedComments);
-        
-        if (user) {
-          const currentUserVote = await postService.getUserVote(id, user.id);
-          setUserVote(currentUserVote);
-        }
-
+        setComments(commentsWithUserData);
+        setIsLoading(false);
       } catch (error) {
-        console.error("Error fetching post details:", error);
-      } finally {
+        console.error('Error fetching post and comments:', error);
+        setError('Failed to load post and comments');
         setIsLoading(false);
       }
     };
@@ -360,7 +354,8 @@ export default function DetailedPostPage() {
       "weight", "weightValue", "weightUnit",
       "solutionCommentId",
       "isSolved",
-      "solved"
+      "solved",
+      "createdAt"
     ];
 
     return (
@@ -535,8 +530,6 @@ export default function DetailedPostPage() {
                         <div className="w-3 h-3 border-t-2 border-teal-400 animate-spin rounded-full"></div>
                       )}
                     </a>
-                    
-                    {/* Tooltip */}
                     {tagInfo?.description && (
                       <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-800 text-white text-sm rounded-lg shadow-lg w-64 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-50">
                         {tagInfo.description}
@@ -716,7 +709,7 @@ export default function DetailedPostPage() {
                               .filter(([key, value]) => 
                                 !key.endsWith('Unit') && 
                                 key !== 'id' && 
-                                key !== 'name' &&  // Exclude name from table
+                                key !== 'name' &&  
                                 value && 
                                 value.toString().trim() !== '' &&
                                 value !== 'null' &&

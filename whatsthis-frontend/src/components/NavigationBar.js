@@ -150,6 +150,7 @@ function NavigationBar({ onOpenLogin, onOpenSignup, onSearch }) {
     if (onSearch) {
       onSearch({});
     }
+    window._loadPosts && window._loadPosts(1, "newest");
   };
 
   const renderComboBox = ({ name, options, label, value, onChange }) => (

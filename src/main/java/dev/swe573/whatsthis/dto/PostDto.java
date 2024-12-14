@@ -3,6 +3,7 @@ package dev.swe573.whatsthis.dto;
 import lombok.Data;
 
 import java.util.List;
+import java.time.LocalDateTime;
 
 @Data
 public class PostDto {
@@ -47,5 +48,7 @@ public class PostDto {
 
     private Long solutionCommentId;
     private boolean isSolved;
+
+    private LocalDateTime createdAt;
 
 }

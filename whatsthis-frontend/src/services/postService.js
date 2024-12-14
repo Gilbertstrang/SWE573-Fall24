@@ -1,11 +1,22 @@
 import axiosInstance from './axiosInstance';
 
-const getAllPosts = async () => {
+const getAllPosts = async (page = 1, size = 12, sortBy = "newest") => {
   try {
-    const response = await axiosInstance.get('/posts');
-    return response.data._embedded?.postDtoes || [];
+    const endpoint = sortBy 
+      ? `http://localhost:8080/api/posts/paginated?page=${page-1}&size=${size}&sort=${sortBy}`
+      : `http://localhost:8080/api/posts?page=${page-1}&size=${size}`;
+      
+    const response = await fetch(endpoint);
+    if (!response.ok) throw new Error('Failed to fetch posts');
+    const data = await response.json();
+    return {
+      posts: data.content || [],
+      totalPages: data.totalPages || 1,
+      currentPage: data.number + 1 || 1,
+      totalElements: data.totalElements || 0
+    };
   } catch (error) {
-    console.error('Error fetching posts:', error);
+    console.error('Error:', error);
     throw error;
   }
 };
@@ -27,7 +38,7 @@ const createPost = async (formData) => {
         'Content-Type': 'application/json',
       },
     });
-    console.log('Create post response:', response.data);
+    window.location.href = '/';
     return response.data;
   } catch (error) {
     console.error('Error creating post:', error);

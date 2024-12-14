@@ -1,6 +1,8 @@
 package dev.swe573.whatsthis.repository;
 
 import dev.swe573.whatsthis.model.Post;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -9,6 +11,11 @@ import java.util.List;
 
 public interface PostRepo extends JpaRepository<Post, Long> {
     List<Post> findByUserId(Long userId);
+
+    Page<Post> findAllByOrderByCreatedAtDesc(Pageable pageable);
+    Page<Post> findAllByOrderByVotesDesc(Pageable pageable);
+    Page<Post> findAllByIsSolvedTrue(Pageable pageable);
+    Page<Post> findAllByIsSolvedFalse(Pageable pageable);
 
     @Query("SELECT DISTINCT p FROM Post p WHERE " +
            "LOWER(p.title) LIKE LOWER(CONCAT('%', :searchText, '%')) OR " +

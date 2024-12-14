@@ -124,7 +124,6 @@ public class UserController {
     @PostMapping("/{id}/profile-picture")
     public ResponseEntity<?> uploadProfilePicture(@PathVariable Long id, @RequestParam("image") MultipartFile file) {
         try {
-            // Use the injected fileUploadController instance
             List<MultipartFile> images = List.of(file);
             ResponseEntity<List<String>> uploadResponse = fileUploadController.uploadImages(images);
             
@@ -133,12 +132,10 @@ public class UserController {
             }
 
             String profilePictureUrl = uploadResponse.getBody().get(0);
-            
-            // Update user's profile picture URL
             UserDto updatedUser = userService.updateProfilePicture(id, profilePictureUrl);
             
             return ResponseEntity.ok(Map.of(
-                "profilePictureUrl", profilePictureUrl,
+                "profilePictureUrl", "http://localhost:8080" + profilePictureUrl,
                 "message", "Profile picture updated successfully"
             ));
         } catch (Exception e) {

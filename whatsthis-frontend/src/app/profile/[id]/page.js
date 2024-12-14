@@ -5,6 +5,34 @@ import { useParams, useRouter } from "next/navigation";
 import { useUser } from "../../../context/UserContext";
 import commentService from "../../../services/commentService";
 
+const tooltipStyles = `
+  [data-tooltip] {
+    position: relative;
+  }
+
+  [data-tooltip]:before {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 0.5rem;
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    border-radius: 0.25rem;
+    font-size: 0.875rem;
+    white-space: nowrap;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.2s;
+  }
+
+  [data-tooltip]:hover:before {
+    opacity: 1;
+    visibility: visible;
+  }
+`;
+
 const ProfilePage = () => {
   const { id } = useParams(); 
   const { user, token, updateUser } = useUser();
@@ -34,12 +62,28 @@ const ProfilePage = () => {
         throw new Error("Failed to fetch profile data");
       }
       const data = await response.json();
+
+      // Fetch user's posts to count solutions
+      const postsResponse = await fetch(`http://localhost:8080/api/posts/user/${profileId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      const postsData = await postsResponse.json();
+      const posts = postsData._embedded?.postDtoes || [];
+      
+      // Count comments marked as solutions
+      const solutionCount = posts.reduce((count, post) => {
+        return count + (post.solutionCommentId ? 1 : 0);
+      }, 0);
+
       setProfileData({
         username: data.username,
         email: data.email,
         bio: data.bio,
-        profilePictureUrl: data.profilePictureUrl,
+        profilePictureUrl: data.profilePictureUrl ? `http://localhost:8080${data.profilePictureUrl}` : null,
         createdAt: data.createdAt,
+        solutionCount: solutionCount
       });
     } catch (error) {
       setError("Failed to fetch profile data.");
@@ -79,29 +123,48 @@ const ProfilePage = () => {
     }
   };
 
-  const handleUpdate = async () => {
+  const handleUpdate = async (dataToUpdate = profileData) => {
     if (!isOwnProfile) return;
 
     try {
-      const response = await fetch(`http://localhost:8080/api/users/${user.id}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(profileData),
-      });
+        const dataToSend = {
+            ...dataToUpdate,
+            profilePictureUrl: dataToUpdate.profilePictureUrl?.replace('http://localhost:8080', '')
+        };
 
-      if (!response.ok) {
-        throw new Error("Failed to update profile");
-      }
+        const response = await fetch(`http://localhost:8080/api/users/${user.id}`, {
+            method: "PUT",
+            headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify(dataToSend)
+        });
 
-      const updatedUser = await response.json();
-      updateUser(updatedUser);
-      alert("Profile updated successfully!");
+        if (!response.ok) {
+            throw new Error("Failed to update profile");
+        }
+
+        const updatedUser = await response.json();
+        
+        updateUser({
+            ...updatedUser,
+            profilePictureUrl: updatedUser.profilePictureUrl ? `http://localhost:8080${updatedUser.profilePictureUrl}` : null
+        });
+        
+        setProfileData(prev => ({
+            ...prev,
+            ...updatedUser,
+            profilePictureUrl: updatedUser.profilePictureUrl ? `http://localhost:8080${updatedUser.profilePictureUrl}` : null
+        }));
+        
+        if (isEditing) {
+            setIsEditing(false);
+            alert("Profile updated successfully!");
+        }
     } catch (error) {
-      console.error("Profile update failed:", error);
-      setError("Profile update failed. Please try again.");
+        console.error("Profile update failed:", error);
+        setError("Profile update failed. Please try again.");
     }
   };
 
@@ -117,32 +180,41 @@ const ProfilePage = () => {
     formData.append('image', file);
 
     try {
-      const uploadResponse = await fetch(`http://localhost:8080/api/users/${user.id}/profile-picture`, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        body: formData,
-      });
+        const uploadResponse = await fetch(`http://localhost:8080/api/users/${user.id}/profile-picture`, {
+            method: 'POST',
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+            body: formData,
+        });
 
-      if (!uploadResponse.ok) throw new Error('Failed to upload image');
+        if (!uploadResponse.ok) throw new Error('Failed to upload image');
 
-      const data = await uploadResponse.json();
-      setProfileData(prev => ({
-        ...prev,
-        profilePictureUrl: data.profilePictureUrl
-      }));
+        const data = await uploadResponse.json();
+        console.log('Upload response:', data);
+
+        setProfileData(prev => ({
+            ...prev,
+            profilePictureUrl: data.profilePictureUrl
+        }));
+
+        const updatedUser = {
+            ...user,
+            profilePictureUrl: data.profilePictureUrl
+        };
+        updateUser(updatedUser);
+
     } catch (error) {
-      console.error('Error uploading image:', error);
-      setError('Failed to upload profile picture.');
+        console.error('Error uploading image:', error);
+        setError('Failed to upload profile picture.');
     }
   };
 
   useEffect(() => {
     fetchProfileData();
     fetchUserPosts();    
-    fetchUserComments();
-  }, [id]);
+    fetchUserComments(); 
+  }, [id]); 
 
   useEffect(() => {
     fetchProfileData();
@@ -158,9 +230,7 @@ const ProfilePage = () => {
       <div className="flex items-start gap-6 relative">
         <div className="w-24 h-24 rounded-full overflow-hidden flex-shrink-0">
           <img
-            src={profileData.profilePictureUrl 
-              ? `http://localhost:8080${profileData.profilePictureUrl}` 
-              : "https://www.gravatar.com/avatar/default?d=mp"}
+            src={profileData.profilePictureUrl || "https://www.gravatar.com/avatar/default?d=mp"}
             alt={profileData.username}
             className="w-full h-full object-cover"
           />
@@ -170,7 +240,6 @@ const ProfilePage = () => {
           <div className="flex justify-between items-start">
             <div>
               <h2 className="text-2xl font-bold">{profileData.username}</h2>
-              <p className="text-gray-400 text-sm">{profileData.email || "No email provided"}</p>
             </div>
             
             {isOwnProfile && (
@@ -213,8 +282,58 @@ const ProfilePage = () => {
           <div className="text-gray-400 text-sm">Comments</div>
         </div>
         <div className="text-center">
-          <div className="text-xl font-bold text-teal-400">0</div>
+          <div className="text-xl font-bold text-teal-400">{profileData.solutionCount}</div>
           <div className="text-gray-400 text-sm">Solutions</div>
+        </div>
+      </div>
+
+      <div className="py-4">
+        <h3 className="text-lg font-semibold mb-3">Badges</h3>
+        <div className="flex flex-wrap gap-3">
+          {profileData.solutionCount >= 1 && (
+            <div 
+              className="flex items-center gap-2 bg-gray-700/50 px-3 py-1.5 rounded-full cursor-help"
+              data-tooltip="Earned by having at least one of your comments marked as a solution"
+            >
+              <span className="text-yellow-400">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                  <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                </svg>
+              </span>
+              <span>Problem Solver</span>
+            </div>
+          )}
+          {userPosts.length >= 5 && (
+            <div 
+              className="flex items-center gap-2 bg-gray-700/50 px-3 py-1.5 rounded-full cursor-help"
+              data-tooltip="Earned by creating 5 or more posts in the community"
+            >
+              <span className="text-blue-400">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                  <path d="M18 3a1 1 0 00-1.196-.98l-10 2A1 1 0 006 5v9.114A4.369 4.369 0 005 14c-1.657 0-3 .895-3 2s1.343 2 3 2 3-.895 3-2V7.82l8-1.6v5.894A4.37 4.37 0 0015 12c-1.657 0-3 .895-3 2s1.343 2 3 2 3-.895 3-2V3z" />
+                </svg>
+              </span>
+              <span>Active Contributor</span>
+            </div>
+          )}
+          {userComments.length >= 10 && (
+            <div 
+              className="flex items-center gap-2 bg-gray-700/50 px-3 py-1.5 rounded-full cursor-help"
+              data-tooltip="Earned by posting 10 or more comments to help others"
+            >
+              <span className="text-green-400">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M18 13V5a2 2 0 00-2-2H4a2 2 0 00-2 2v8a2 2 0 002 2h3l3 3 3-3h3a2 2 0 002-2zM5 7a1 1 0 011-1h8a1 1 0 110 2H6a1 1 0 01-1-1zm1 3a1 1 0 100 2h3a1 1 0 100-2H6z" clipRule="evenodd" />
+                </svg>
+              </span>
+              <span>Community Expert</span>
+            </div>
+          )}
+          {!profileData.solutionCount && userPosts.length < 5 && userComments.length < 10 && (
+            <div className="text-gray-400 italic">
+              No badges earned yet. Keep participating to earn badges!
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -239,7 +358,7 @@ const ProfilePage = () => {
           <div className="w-24 h-24 rounded-full overflow-hidden">
             <img
               src={profileData.profilePictureUrl 
-                ? `http://localhost:8080${profileData.profilePictureUrl}` 
+                ? profileData.profilePictureUrl 
                 : "https://www.gravatar.com/avatar/default?d=mp"}
               alt="Profile"
               className="w-full h-full object-cover"
@@ -348,44 +467,47 @@ const ProfilePage = () => {
   };
 
   return (
-    <div className="bg-gray-900 text-white min-h-screen">
-      <div className="container mx-auto max-w-3xl p-6">
-        {/* Main Content */}
-        <div className="bg-gray-800/50 backdrop-blur-sm p-6 rounded-xl shadow-lg">
-          {isEditing && isOwnProfile ? renderProfileEdit() : renderProfileOverview()}
-        </div>
-
-        {/* Tabs Section */}
-        <div className="mt-6">
-          <div className="flex gap-1 bg-gray-800/30 backdrop-blur-sm p-1 rounded-lg">
-            <button
-              onClick={() => setActiveTab("posts")}
-              className={`flex-1 py-2 px-4 rounded-md transition-colors ${
-                activeTab === "posts" 
-                  ? "bg-gray-700 text-teal-400" 
-                  : "text-gray-400 hover:bg-gray-700/50"
-              }`}
-            >
-              Posts
-            </button>
-            <button
-              onClick={() => setActiveTab("activity")}
-              className={`flex-1 py-2 px-4 rounded-md transition-colors ${
-                activeTab === "activity" 
-                  ? "bg-gray-700 text-teal-400" 
-                  : "text-gray-400 hover:bg-gray-700/50"
-              }`}
-            >
-              Comments
-            </button>
+    <>
+      <style jsx>{tooltipStyles}</style>
+      <div className="bg-gray-900 text-white min-h-screen">
+        <div className="container mx-auto max-w-3xl p-6">
+          {/* Main Content */}
+          <div className="bg-gray-800/50 backdrop-blur-sm p-6 rounded-xl shadow-lg">
+            {isEditing && isOwnProfile ? renderProfileEdit() : renderProfileOverview()}
           </div>
+
+          {/* Tabs Section */}
           <div className="mt-6">
-            {activeTab === "posts" && renderPosts()}
-            {activeTab === "activity" && renderComments()}
+            <div className="flex gap-1 bg-gray-800/30 backdrop-blur-sm p-1 rounded-lg">
+              <button
+                onClick={() => setActiveTab("posts")}
+                className={`flex-1 py-2 px-4 rounded-md transition-colors ${
+                  activeTab === "posts" 
+                    ? "bg-gray-700 text-teal-400" 
+                    : "text-gray-400 hover:bg-gray-700/50"
+                }`}
+              >
+                Posts
+              </button>
+              <button
+                onClick={() => setActiveTab("activity")}
+                className={`flex-1 py-2 px-4 rounded-md transition-colors ${
+                  activeTab === "activity" 
+                    ? "bg-gray-700 text-teal-400" 
+                    : "text-gray-400 hover:bg-gray-700/50"
+                }`}
+              >
+                Comments
+              </button>
+            </div>
+            <div className="mt-6">
+              {activeTab === "posts" && renderPosts()}
+              {activeTab === "activity" && renderComments()}
+            </div>
           </div>
         </div>
       </div>
-    </div>
+    </>
   );
 };
 

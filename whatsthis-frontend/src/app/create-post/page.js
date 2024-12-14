@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useUser } from "../../context/UserContext";
 
@@ -159,17 +159,14 @@ const CreatePostPage = () => {
   const [activePartIndex, setActivePartIndex] = useState(null);
   const [editingPartName, setEditingPartName] = useState(null);
   const [editedName, setEditedName] = useState("");
+  const [previewUrls, setPreviewUrls] = useState([]);
 
   const createEmptyPart = () => ({
     partName: `Part ${parts.length + 1}`,
     material: "",
-    sizeValue: "",
-    sizeUnit: "cm",
     textAndLanguage: "",
     color: "",
     shape: "",
-    weightValue: "",
-    weightUnit: "kg",
     price: "",
     location: "",
     timePeriod: "",
@@ -188,7 +185,9 @@ const CreatePostPage = () => {
     heightValue: "",
     heightUnit: "cm",
     depthValue: "",
-    depthUnit: "cm"
+    depthUnit: "cm",
+    weightValue: "",
+    weightUnit: "kg"
   });
 
   const addNewPart = () => {
@@ -200,7 +199,7 @@ const CreatePostPage = () => {
     const updatedParts = [...parts];
     updatedParts[index] = {
       ...updatedParts[index],
-      [name]: type === "checkbox" ? value.target.checked : (value || "")
+      [name]: type === "checkbox" ? value.target.checked : value,
     };
     setParts(updatedParts);
   };
@@ -265,8 +264,21 @@ const CreatePostPage = () => {
 
   const handleImageUpload = async (e) => {
     const files = Array.from(e.target.files);
+    const imageFiles = files.filter(file => file.type.startsWith('image/'));
+    if (imageFiles.length === 0) {
+      setError("Please select only image files.");
+      return;
+    }
+
     const formData = new FormData();
-    files.forEach((file) => formData.append("images", file));
+    
+    const newPreviewUrls = imageFiles.map(file => ({
+      url: URL.createObjectURL(file),
+      file: file
+    }));
+    setPreviewUrls(prev => [...prev, ...newPreviewUrls]);
+    
+    imageFiles.forEach((file) => formData.append("images", file));
 
     setLoading(true);
     try {
@@ -279,15 +291,31 @@ const CreatePostPage = () => {
         throw new Error("Failed to upload images");
       }
 
-      const urls = await res.json();
-      setFormData((prev) => ({ ...prev, imageUrls: [...prev.imageUrls, ...urls] }));
-      setImages((prev) => [...prev, ...files.map((file) => file.name)]);
+      const uploadedUrls = await res.json();
+      setFormData((prev) => ({ ...prev, imageUrls: [...prev.imageUrls, ...uploadedUrls] }));
+      setImages((prev) => [...prev, ...imageFiles.map((file) => file.name)]);
     } catch (err) {
       console.error("Image upload failed:", err);
       setError("Image upload failed. Please try again.");
+      newPreviewUrls.forEach(({ url }) => URL.revokeObjectURL(url));
+      setPreviewUrls(prev => prev.filter(p => !newPreviewUrls.includes(p)));
     } finally {
       setLoading(false);
     }
+  };
+
+  const removePreview = (index) => {
+    setPreviewUrls(prev => {
+      const newPreviews = [...prev];
+      URL.revokeObjectURL(newPreviews[index].url);
+      newPreviews.splice(index, 1);
+      return newPreviews;
+    });
+    
+    setFormData(prev => ({
+      ...prev,
+      imageUrls: prev.imageUrls.filter((_, i) => i !== index)
+    }));
   };
 
   const handleSubmit = async (e) => {
@@ -334,7 +362,8 @@ const CreatePostPage = () => {
       width: `${formData.widthValue} ${formData.widthUnit}`,
       weight: `${formData.weightValue} ${formData.weightUnit}`,
       userId: user.id,
-      parts: formattedParts, 
+      parts: formattedParts,
+      createdAt: new Date().toISOString()
     };
 
     setLoading(true);
@@ -420,11 +449,17 @@ const CreatePostPage = () => {
     const updatedParts = [...parts];
     updatedParts[index] = {
       ...updatedParts[index],
-      partName: newName || `Part ${index + 1}` 
+      partName: newName || `Part ${index + 1}`
     };
     setParts(updatedParts);
     setEditingPartName(null);
   };
+
+  useEffect(() => {
+    return () => {
+      previewUrls.forEach(({ url }) => URL.revokeObjectURL(url));
+    };
+  }, []);
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-900 text-white">
@@ -440,6 +475,7 @@ const CreatePostPage = () => {
             )}
           </div>
 
+          {/* Form Section */}
           <form onSubmit={handleSubmit} className="space-y-8">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               <div className="lg:col-span-3">
@@ -764,6 +800,7 @@ const CreatePostPage = () => {
                   </div>
                 ) : (
                   <div>
+                    {/* Dimensions Section for Parts */}
                     <div className="mb-8">
                       <div className="lg:col-span-3 bg-gray-700 p-6 rounded-lg">
                         <h3 className="text-lg font-semibold mb-4">Part Dimensions</h3>
@@ -858,6 +895,8 @@ const CreatePostPage = () => {
                         </div>
                       </div>
                     </div>
+
+                    {/* Main three-column grid for other fields */}
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                       {/* Column 1 */}
                       <div className="space-y-6">
@@ -1039,9 +1078,32 @@ const CreatePostPage = () => {
               <input
                 type="file"
                 multiple
+                accept="image/*"
                 onChange={handleImageUpload}
                 className="w-full px-4 py-3 bg-gray-700 text-white rounded-lg"
               />
+              
+              {/* Image Previews */}
+              {previewUrls.length > 0 && (
+                <div className="mt-4 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                  {previewUrls.map(({ url }, index) => (
+                    <div key={index} className="relative group">
+                      <img
+                        src={url}
+                        alt={`Preview ${index + 1}`}
+                        className="w-full h-40 object-cover rounded-lg"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => removePreview(index)}
+                        className="absolute top-2 right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* Submit Button */}
