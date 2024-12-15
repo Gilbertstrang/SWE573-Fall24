@@ -76,5 +76,3 @@ fi
 # Add after environment setup
 echo "🔐 Generating SSL certificates..."
 bash generate-certs.sh
-
-# Rest of the deployment script...

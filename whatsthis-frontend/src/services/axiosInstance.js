@@ -1,9 +1,7 @@
 import axios from 'axios';
 import https from 'https';
 
-const baseURL = (typeof window !== 'undefined')
-  ? 'https://localhost:8443/api'
-  : 'https://backend:8443/api';
+const baseURL = process.env.NEXT_PUBLIC_API_URL || 'https://localhost:8443/api';
 
 console.log('API URL:', process.env.NEXT_PUBLIC_API_URL);
 console.log('Base URL being used:', baseURL);
@@ -25,7 +23,7 @@ const axiosInstance = axios.create({
   maxBodyLength: 10000000
 });
 
-// Add request interceptor for debugging
+
 axiosInstance.interceptors.request.use(
   config => {
     console.log('Making request to:', config.url);
@@ -35,7 +33,7 @@ axiosInstance.interceptors.request.use(
   error => Promise.reject(error)
 );
 
-// Add response interceptor for debugging
+
 axiosInstance.interceptors.response.use(
   response => response,
   error => {
