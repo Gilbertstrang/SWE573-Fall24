@@ -18,7 +18,7 @@ services:
     build:
       context: ./whatsthis-frontend
       args:
-        NEXT_PUBLIC_API_URL: https://localhost:8443/api
+        NEXT_PUBLIC_API_URL: https://${VM_IP}:8443/api
     container_name: frontend
     ports:
       - "3000:3000"
@@ -27,7 +27,7 @@ services:
     depends_on:
       - backend
     environment:
-      - NEXT_PUBLIC_API_URL=https://localhost:8443/api
+      - NEXT_PUBLIC_API_URL=https://${VM_IP}:8443/api
     volumes:
       - ./frontend.key:/app/frontend.key:ro
       - ./frontend.crt:/app/frontend.crt:ro

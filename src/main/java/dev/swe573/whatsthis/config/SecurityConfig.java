@@ -60,7 +60,8 @@ public class SecurityConfig {
         config.setAllowCredentials(true);
         config.setAllowedOrigins(List.of(
             "https://frontend:3000",
-            "https://localhost:3000"
+            "https://localhost:3000",
+            "https://" + System.getenv("VM_IP") + ":3000"
         ));
         config.setAllowedHeaders(List.of("Origin", "Content-Type", "Accept", "Authorization"));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
