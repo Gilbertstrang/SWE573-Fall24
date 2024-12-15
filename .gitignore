@@ -30,6 +30,15 @@ local.properties
 # External tool builders
 .externalToolBuilders/
 
+# SSL/TLS files
+*.key
+*.crt
+*.p12
+*.pem
+keystore.p12
+frontend.key
+frontend.crt
+
 # Locally stored "Eclipse launch configurations"
 *.launch
 

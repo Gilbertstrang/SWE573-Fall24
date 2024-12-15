@@ -73,4 +73,8 @@ else
     echo "❌ Frontend failed to start"
 fi
 
-echo "🎉 Deployment completed!"
+# Add after environment setup
+echo "🔐 Generating SSL certificates..."
+bash generate-certs.sh
+
+# Rest of the deployment script...
