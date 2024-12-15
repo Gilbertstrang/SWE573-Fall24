@@ -5,24 +5,32 @@ services:
       context: ./
     container_name: backend
     ports:
-      - "8080:8080"
+      - "8443:8443"
     networks:
       - app-network
     volumes:
-      - /Users/hal9000/Projects/SWE573-Fall24/env.properties:/env.properties
+      - ./env.properties:/app/env.properties
     environment:
-        SPRING_CONFIG_LOCATION: file:env.properties
+      SPRING_CONFIG_LOCATION: file:/app/env.properties
+      SERVER_PORT: 8443
 
   frontend:
     build:
       context: ./whatsthis-frontend
+      args:
+        NEXT_PUBLIC_API_URL: https://localhost:8443/api
     container_name: frontend
     ports:
       - "3000:3000"
     networks:
       - app-network
+    depends_on:
+      - backend
     environment:
-      - NEXT_PUBLIC_API_URL=http://34.56.184.233:8080/api
+      - NEXT_PUBLIC_API_URL=https://localhost:8443/api
+    volumes:
+      - ./frontend.key:/app/frontend.key:ro
+      - ./frontend.crt:/app/frontend.crt:ro
 
   db:
     image: postgres:latest
