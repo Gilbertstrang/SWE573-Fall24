@@ -13,9 +13,18 @@ export default function HomePage() {
   const [totalPages, setTotalPages] = useState(1);
   const { user } = useUser();
   const [sortBy, setSortBy] = useState("newest");
+  const [isSearchMode, setIsSearchMode] = useState(false);
+  const [currentSearchParams, setCurrentSearchParams] = useState(null);
 
   const handleSearch = async (searchParams) => {
     setLoading(true);
+    if (Object.values(searchParams).every(value => !value)) {
+      setIsSearchMode(false);
+      loadPosts(1, sortBy);
+      return;
+    }
+    setIsSearchMode(true);
+    setCurrentSearchParams(searchParams);
     try {
       const searchResults = await postService.searchPosts(searchParams);
       setPosts(searchResults._embedded?.postDtoes || searchResults);
@@ -41,8 +50,10 @@ export default function HomePage() {
   };
 
   useEffect(() => {
-    loadPosts(currentPage, sortBy);
-  }, [currentPage, sortBy]);
+    if (!isSearchMode) {
+      loadPosts(currentPage, sortBy);
+    }
+  }, [currentPage, sortBy, isSearchMode]);
 
   useEffect(() => {
     window._handleSearch = handleSearch;
@@ -56,32 +67,32 @@ export default function HomePage() {
   }, []);
 
   const PaginationControls = () => {
+    if (isSearchMode) return null;
+    
     const pages = [];
     for (let i = 1; i <= totalPages; i++) {
       pages.push(i);
     }
 
     return (
-      <div className="flex justify-center gap-4 mt-8 items-center">
+      <div className="flex justify-center gap-2 mt-8">
         <button
           onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
           disabled={currentPage === 1}
-          className={`p-2 rounded-lg flex items-center ${
+          className={`px-3 py-1 rounded-lg ${
             currentPage === 1
               ? "bg-gray-700 text-gray-500"
               : "bg-gray-700 text-white hover:bg-gray-600"
           }`}
         >
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-          </svg>
+          Previous
         </button>
         
         {pages.map(page => (
           <button
             key={page}
             onClick={() => setCurrentPage(page)}
-            className={`px-4 py-2 rounded-lg text-lg ${
+            className={`px-3 py-1 rounded-lg ${
               currentPage === page
                 ? "bg-teal-500 text-white"
                 : "bg-gray-700 text-white hover:bg-gray-600"
@@ -94,15 +105,13 @@ export default function HomePage() {
         <button
           onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
           disabled={currentPage === totalPages}
-          className={`p-2 rounded-lg flex items-center ${
+          className={`px-3 py-1 rounded-lg ${
             currentPage === totalPages
               ? "bg-gray-700 text-gray-500"
               : "bg-gray-700 text-white hover:bg-gray-600"
           }`}
         >
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-          </svg>
+          Next
         </button>
       </div>
     );

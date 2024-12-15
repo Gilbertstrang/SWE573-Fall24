@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
+import axiosInstance from '../services/axiosInstance';
+import { getFullImageUrl } from '../utils/urlHelper';
 
 const PostCard = ({ post }) => {
   const [username, setUsername] = useState(post.username || "Unknown");
@@ -7,9 +9,9 @@ const PostCard = ({ post }) => {
 
   useEffect(() => {
     if (!post.username) {
-      fetch(`http://localhost:8080/api/users/${post.userId}`)
-        .then((res) => res.json())
-        .then((data) => {
+      axiosInstance.get(`/users/${post.userId}`)
+        .then((response) => {
+          const data = response.data;
           if (data && data.username) {
             setUsername(data.username);
           }
@@ -17,9 +19,9 @@ const PostCard = ({ post }) => {
         .catch((error) => console.error("Failed to fetch username:", error));
     }
 
-    fetch(`http://localhost:8080/api/comments/posts/${post.id}/comments`)
-      .then((res) => res.json())
-      .then((data) => {
+    axiosInstance.get(`/comments/posts/${post.id}/comments`)
+      .then((response) => {
+        const data = response.data;
         const count = data._embedded?.commentDtoes?.length || 0;
         setCommentCount(count);
       })
@@ -54,7 +56,7 @@ const PostCard = ({ post }) => {
         <div className="h-[200px] bg-gray-700 flex-shrink-0">
           {post.imageUrls && post.imageUrls.length > 0 ? (
             <img
-              src={`http://localhost:8080/${post.imageUrls[0].split("/").pop()}`}
+              src={getFullImageUrl(post.imageUrls[0])}
               alt={post.title}
               className="w-full h-full object-cover"
             />

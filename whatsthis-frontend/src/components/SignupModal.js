@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useUser } from '../context/UserContext';
+import axiosInstance from '../services/axiosInstance';
 
 const SignupModal = ({ onClose }) => {
   const [username, setUsername] = useState('');
@@ -27,41 +28,36 @@ const SignupModal = ({ onClose }) => {
     }
 
     try {
-      const response = await fetch('http://localhost:8080/api/users/signup', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, email, password }),
+      const response = await axiosInstance.post('/users/signup', {
+        username,
+        email,
+        password
       });
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to create account');
-      }
+      const data = response.data;
       setError('');
-      const loginResponse = await fetch('http://localhost:8080/api/users/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password }),
+      
+      const loginResponse = await axiosInstance.post('/users/login', {
+        username,
+        password
       });
 
-      const loginData = await loginResponse.json();
-      if (loginResponse.ok) {
-        login({
-          id: loginData.id,
-          username: loginData.username,
-          email: loginData.email,
-        }, loginData.token);
-      }
-
+      const loginData = loginResponse.data;
+      login({
+        id: loginData.id,
+        username: loginData.username,
+        email: loginData.email,
+      }, loginData.token);
       onClose();
     } catch (error) {
-      if (error.message.includes('username')) {
+      if (error.response?.data?.error) {
+        setError(error.response.data.error);
+      } else if (error.message.includes('username')) {
         setError('This username is already taken');
       } else if (error.message.includes('email')) {
         setError('This email is already registered');
       } else {
-        setError(error.message || 'Failed to create account. Please try again.');
+        setError('Failed to create account. Please try again.');
       }
     } finally {
       setIsLoading(false);

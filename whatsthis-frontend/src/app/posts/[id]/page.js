@@ -6,6 +6,8 @@ import postService from "../../../services/postService";
 import commentService from "../../../services/commentService";
 import { useUser } from "../../../context/UserContext";
 import Link from "next/link";
+import axiosInstance from "../../../services/axiosInstance";
+import { getFullImageUrl } from "../../../utils/urlHelper";
 
 export default function DetailedPostPage() {
   const router = useRouter();
@@ -50,32 +52,23 @@ export default function DetailedPostPage() {
         const fetchedPost = await postService.getPostById(id);
         setPost(fetchedPost);
 
-        const userRes = await fetch(`http://localhost:8080/api/users/${fetchedPost.userId}`);
-        if (userRes.ok) {
-          const userData = await userRes.json();
-          setUsername(userData.username);
-          setProfilePicture(
-            userData.profilePictureUrl 
-              ? `http://localhost:8080${userData.profilePictureUrl}` 
-              : "https://www.gravatar.com/avatar/default?d=mp"
-          );
-        }
+        const userRes = await axiosInstance.get(`/users/${fetchedPost.userId}`);
+        const userData = userRes.data;
+        setUsername(userData.username);
+        setProfilePicture(getFullImageUrl(userData.profilePictureUrl));
 
         const fetchedComments = await commentService.getCommentsByPostId(id);
         const commentsWithUserData = await Promise.all(
           fetchedComments.map(async (comment) => {
             try {
-              const userRes = await fetch(`http://localhost:8080/api/users/${comment.userId}`);
-              const userData = await userRes.json();
+              const userRes = await axiosInstance.get(`/users/${comment.userId}`);
+              const userData = userRes.data;
               return {
                 ...comment,
                 commenterUsername: userData.username,
-                profilePicture: userData.profilePictureUrl 
-                  ? `http://localhost:8080${userData.profilePictureUrl}` 
-                  : "https://www.gravatar.com/avatar/default?d=mp"
+                profilePicture: getFullImageUrl(userData.profilePictureUrl)
               };
             } catch (error) {
-              console.error(`Error fetching user data for comment ${comment.id}:`, error);
               return {
                 ...comment,
                 commenterUsername: "Unknown User",
@@ -85,10 +78,10 @@ export default function DetailedPostPage() {
           })
         );
         setComments(commentsWithUserData);
-        setIsLoading(false);
       } catch (error) {
-        console.error('Error fetching post and comments:', error);
+        console.error('Error:', error);
         setError('Failed to load post and comments');
+      } finally {
         setIsLoading(false);
       }
     };
@@ -188,24 +181,9 @@ export default function DetailedPostPage() {
     }
 
     try {
-      const endpoint = commentId === post.solutionCommentId
-        ? `http://localhost:8080/api/posts/${post.id}/solution/remove`
-        : `http://localhost:8080/api/posts/${post.id}/solution/${commentId}`;
-
-      const response = await fetch(endpoint, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (response.ok) {
-        const updatedPost = await response.json();
-        setPost(updatedPost);
-      } else {
-        const errorText = await response.text();
-        console.error('Error marking solution:', errorText);
-      }
+      const isRemoving = commentId === post.solutionCommentId;
+      const updatedPost = await commentService.toggleSolution(post.id, commentId, isRemoving);
+      setPost(updatedPost);
     } catch (error) {
       console.error('Error marking solution:', error);
     }
@@ -548,7 +526,7 @@ export default function DetailedPostPage() {
               <div className="bg-gray-800 rounded-lg overflow-hidden shadow-lg mb-6">
                 <div className="relative aspect-[16/9]">
                   <img
-                    src={`http://localhost:8080/${post.imageUrls[currentImageIndex].split("/").pop()}`}
+                    src={getFullImageUrl(post.imageUrls[currentImageIndex])}
                     alt={`Post Image ${currentImageIndex + 1}`}
                     className="w-full h-full object-contain bg-gray-900"
                     onClick={handleImageClick}
@@ -765,7 +743,7 @@ export default function DetailedPostPage() {
           {/* Main Image */}
           <div className="relative w-full h-full flex items-center justify-center">
             <img 
-              src={`http://localhost:8080/${post.imageUrls[currentImageIndex].split("/").pop()}`}
+              src={getFullImageUrl(post.imageUrls[currentImageIndex])}
               alt="Fullscreen view"
               className="max-w-[90vw] max-h-[90vh] object-contain"
               onClick={(e) => e.stopPropagation()} 

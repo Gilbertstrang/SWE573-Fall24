@@ -2,13 +2,14 @@ import axiosInstance from './axiosInstance';
 
 const getAllPosts = async (page = 1, size = 12, sortBy = "newest") => {
   try {
-    const endpoint = sortBy 
-      ? `http://localhost:8080/api/posts/paginated?page=${page-1}&size=${size}&sort=${sortBy}`
-      : `http://localhost:8080/api/posts?page=${page-1}&size=${size}`;
-      
-    const response = await fetch(endpoint);
-    if (!response.ok) throw new Error('Failed to fetch posts');
-    const data = await response.json();
+    const response = await axiosInstance.get('/posts/paginated', {
+      params: {
+        page: page - 1,
+        size,
+        sort: sortBy
+      }
+    });
+    const data = response.data;
     return {
       posts: data.content || [],
       totalPages: data.totalPages || 1,

@@ -132,6 +132,8 @@ function NavigationBar({ onOpenLogin, onOpenSignup, onSearch }) {
     e.preventDefault();
     onSearch(searchParams);
     setIsAdvancedOpen(false);
+    window._currentPage = 1;
+    window._totalPages = 1;
   };
 
   const handleLogoClick = () => {
@@ -150,6 +152,8 @@ function NavigationBar({ onOpenLogin, onOpenSignup, onSearch }) {
     if (onSearch) {
       onSearch({});
     }
+    window._currentPage = 1;
+    window._totalPages = null;
     window._loadPosts && window._loadPosts(1, "newest");
   };
 

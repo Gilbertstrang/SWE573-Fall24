@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useUser } from "../../context/UserContext";
+import axiosInstance from "../../services/axiosInstance";
 
 const CreatePostPage = () => {
   const { user } = useUser();
@@ -229,11 +230,8 @@ const CreatePostPage = () => {
     setLoadingTags(true);
     try {
       console.log('Fetching tags for query:', query);
-      const res = await fetch(`http://localhost:8080/api/tags/search?query=${encodeURIComponent(query)}`);
-      if (!res.ok) {
-        throw new Error("Failed to fetch tag suggestions");
-      }
-      const suggestions = await res.json();
+      const response = await axiosInstance.get(`/tags/search?query=${encodeURIComponent(query)}`);
+      const suggestions = response.data;
       console.log('Received tag suggestions:', suggestions);
       setTagSuggestions(suggestions);
     } catch (error) {
@@ -282,16 +280,13 @@ const CreatePostPage = () => {
 
     setLoading(true);
     try {
-      const res = await fetch("http://localhost:8080/api/uploads/images", {
-        method: "POST",
-        body: formData,
+      const response = await axiosInstance.post("/uploads/images", formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
       });
 
-      if (!res.ok) {
-        throw new Error("Failed to upload images");
-      }
-
-      const uploadedUrls = await res.json();
+      const uploadedUrls = response.data;
       setFormData((prev) => ({ ...prev, imageUrls: [...prev.imageUrls, ...uploadedUrls] }));
       setImages((prev) => [...prev, ...imageFiles.map((file) => file.name)]);
     } catch (err) {
@@ -368,21 +363,8 @@ const CreatePostPage = () => {
 
     setLoading(true);
     try {
-      const res = await fetch("http://localhost:8080/api/posts", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(postData),
-      });
-
-      if (!res.ok) {
-        throw new Error("Failed to create post");
-      }
-
-      const data = await res.json();
-      console.log("Post created successfully:", data);
-
+      const response = await axiosInstance.post('/posts', postData);
+      console.log("Post created successfully:", response.data);
       router.push("/");
     } catch (err) {
       console.error("Post creation failed:", err);

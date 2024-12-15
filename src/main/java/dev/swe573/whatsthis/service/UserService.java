@@ -113,7 +113,7 @@ public class UserService implements UserDetailsService{
         User user = new User();
         user.setUsername(userDto.getUsername());
         user.setEmail(userDto.getEmail());
-        user.setPassword(user.getPassword());
+        user.setPassword(userDto.getPassword());
         user.setRoles(userDto.getRoles());
         user.setBio(userDto.getBio());
         user.setProfilePictureUrl(userDto.getProfilePictureUrl());

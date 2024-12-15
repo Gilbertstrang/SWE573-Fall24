@@ -1,10 +1,13 @@
 import axios from 'axios';
 
+const baseURL = process.env.NEXT_PUBLIC_API_URL;
+
 const axiosInstance = axios.create({
-  baseURL: 'http://localhost:8080/api',
+  baseURL: baseURL,
   headers: {
     'Content-Type': 'application/json',
   },
+  withCredentials: true
 });
 
 axiosInstance.interceptors.request.use(

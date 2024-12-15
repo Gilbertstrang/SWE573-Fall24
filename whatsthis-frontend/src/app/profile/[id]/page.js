@@ -4,6 +4,8 @@ import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useUser } from "../../../context/UserContext";
 import commentService from "../../../services/commentService";
+import axiosInstance from "../../../services/axiosInstance";
+import { getFullImageUrl } from "../../../utils/urlHelper";
 
 const tooltipStyles = `
   [data-tooltip] {
@@ -57,22 +59,12 @@ const ProfilePage = () => {
   const fetchProfileData = async () => {
     try {
       const profileId = id || user?.id;
-      const response = await fetch(`http://localhost:8080/api/users/${profileId}`);
-      if (!response.ok) {
-        throw new Error("Failed to fetch profile data");
-      }
-      const data = await response.json();
+      const response = await axiosInstance.get(`/users/${profileId}`);
+      const data = response.data;
 
-      // Fetch user's posts to count solutions
-      const postsResponse = await fetch(`http://localhost:8080/api/posts/user/${profileId}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      const postsData = await postsResponse.json();
-      const posts = postsData._embedded?.postDtoes || [];
+      const postsResponse = await axiosInstance.get(`/posts/user/${profileId}`);
+      const posts = postsResponse.data._embedded?.postDtoes || [];
       
-      // Count comments marked as solutions
       const solutionCount = posts.reduce((count, post) => {
         return count + (post.solutionCommentId ? 1 : 0);
       }, 0);
@@ -81,7 +73,7 @@ const ProfilePage = () => {
         username: data.username,
         email: data.email,
         bio: data.bio,
-        profilePictureUrl: data.profilePictureUrl ? `http://localhost:8080${data.profilePictureUrl}` : null,
+        profilePictureUrl: getFullImageUrl(data.profilePictureUrl),
         createdAt: data.createdAt,
         solutionCount: solutionCount
       });
@@ -96,16 +88,8 @@ const ProfilePage = () => {
   const fetchUserPosts = async () => {
     try {
       const profileId = id || user?.id;
-      const response = await fetch(`http://localhost:8080/api/posts/user/${profileId}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      if (!response.ok) {
-        throw new Error("Failed to fetch user posts");
-      }
-      const data = await response.json();
-      setUserPosts(data._embedded?.postDtoes || []);
+      const response = await axiosInstance.get(`/posts/user/${profileId}`);
+      setUserPosts(response.data._embedded?.postDtoes || []);
     } catch (error) {
       setError("Failed to load posts.");
       console.error("Error fetching user posts:", error);
@@ -127,44 +111,32 @@ const ProfilePage = () => {
     if (!isOwnProfile) return;
 
     try {
-        const dataToSend = {
-            ...dataToUpdate,
-            profilePictureUrl: dataToUpdate.profilePictureUrl?.replace('http://localhost:8080', '')
-        };
+      const dataToSend = {
+        ...dataToUpdate,
+        profilePictureUrl: dataToUpdate.profilePictureUrl?.replace(process.env.NEXT_PUBLIC_API_URL, '')
+      };
 
-        const response = await fetch(`http://localhost:8080/api/users/${user.id}`, {
-            method: "PUT",
-            headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${token}`,
-            },
-            body: JSON.stringify(dataToSend)
-        });
-
-        if (!response.ok) {
-            throw new Error("Failed to update profile");
-        }
-
-        const updatedUser = await response.json();
-        
-        updateUser({
-            ...updatedUser,
-            profilePictureUrl: updatedUser.profilePictureUrl ? `http://localhost:8080${updatedUser.profilePictureUrl}` : null
-        });
-        
-        setProfileData(prev => ({
-            ...prev,
-            ...updatedUser,
-            profilePictureUrl: updatedUser.profilePictureUrl ? `http://localhost:8080${updatedUser.profilePictureUrl}` : null
-        }));
-        
-        if (isEditing) {
-            setIsEditing(false);
-            alert("Profile updated successfully!");
-        }
+      const response = await axiosInstance.put(`/users/${user.id}`, dataToSend);
+      const updatedUser = response.data;
+      
+      updateUser({
+        ...updatedUser,
+        profilePictureUrl: getFullImageUrl(updatedUser.profilePictureUrl)
+      });
+      
+      setProfileData(prev => ({
+        ...prev,
+        ...updatedUser,
+        profilePictureUrl: getFullImageUrl(updatedUser.profilePictureUrl)
+      }));
+      
+      if (isEditing) {
+        setIsEditing(false);
+        alert("Profile updated successfully!");
+      }
     } catch (error) {
-        console.error("Profile update failed:", error);
-        setError("Profile update failed. Please try again.");
+      console.error("Profile update failed:", error);
+      setError("Profile update failed. Please try again.");
     }
   };
 
@@ -174,39 +146,33 @@ const ProfilePage = () => {
 
   const handleImageUpload = async (e) => {
     const file = e.target.files[0];
-    if (!file) return;
-
     const formData = new FormData();
     formData.append('image', file);
 
     try {
-        const uploadResponse = await fetch(`http://localhost:8080/api/users/${user.id}/profile-picture`, {
-            method: 'POST',
-            headers: {
-                Authorization: `Bearer ${token}`,
-            },
-            body: formData,
-        });
+      const uploadResponse = await axiosInstance.post(
+        `/users/${user.id}/profile-picture`,
+        formData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        }
+      );
 
-        if (!uploadResponse.ok) throw new Error('Failed to upload image');
+      const data = uploadResponse.data;
+      setProfileData(prev => ({
+        ...prev,
+        profilePictureUrl: getFullImageUrl(data.profilePictureUrl)
+      }));
 
-        const data = await uploadResponse.json();
-        console.log('Upload response:', data);
-
-        setProfileData(prev => ({
-            ...prev,
-            profilePictureUrl: data.profilePictureUrl
-        }));
-
-        const updatedUser = {
-            ...user,
-            profilePictureUrl: data.profilePictureUrl
-        };
-        updateUser(updatedUser);
-
+      updateUser({
+        ...user,
+        profilePictureUrl: getFullImageUrl(data.profilePictureUrl)
+      });
     } catch (error) {
-        console.error('Error uploading image:', error);
-        setError('Failed to upload profile picture.');
+      console.error('Error uploading image:', error);
+      setError('Failed to upload profile picture.');
     }
   };
 
@@ -432,7 +398,7 @@ const ProfilePage = () => {
             <p className="text-gray-400 mb-4">{post.description}</p>
             {post.imageUrls?.length > 0 && (
               <img
-                src={`http://localhost:8080/${post.imageUrls[0].split("/").pop()}`}
+                src={getFullImageUrl(post.imageUrls[0])}
                 alt={post.title}
                 className="w-full h-auto rounded-md mb-4"
               />

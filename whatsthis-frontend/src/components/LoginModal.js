@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useUser } from '../context/UserContext';
+import axiosInstance from '../services/axiosInstance';
 
 const LoginModal = ({ onClose }) => {
   const [username, setUsername] = useState('');
@@ -15,17 +16,12 @@ const LoginModal = ({ onClose }) => {
     setIsLoading(true);
 
     try {
-      const response = await fetch('http://localhost:8080/api/users/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password }),
+      const response = await axiosInstance.post('/users/login', {
+        username,
+        password
       });
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Invalid username or password');
-      }
+      const data = response.data;
 
       const { token } = data;
       const userData = {
@@ -37,7 +33,7 @@ const LoginModal = ({ onClose }) => {
       login(userData, token);
       onClose();
     } catch (error) {
-      setError(error.message || 'Failed to login. Please try again.');
+      setError(error.response?.data?.error || 'Failed to login. Please try again.');
     } finally {
       setIsLoading(false);
     }
