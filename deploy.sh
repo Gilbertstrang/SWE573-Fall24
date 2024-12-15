@@ -42,8 +42,15 @@ echo "VM IP is: $VM_IP"
 
 # 6. Update configuration files
 echo "⚙️ Updating configuration files..."
-# Update frontend API URL
-sed -i "s|NEXT_PUBLIC_API_URL=.*|NEXT_PUBLIC_API_URL=https://$VM_IP:8443/api|g" .env
+echo "⚙️ Creating env.properties file..."
+cat > env.properties << EOF
+NEXT_PUBLIC_API_URL=https://$VM_IP:8443/api
+VM_IP=$VM_IP
+POSTGRES_DB=${POSTGRES_DB:-whatsthis}
+POSTGRES_USER=${POSTGRES_USER:-your_secure_username}
+POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-your_secure_password}
+sslkey=${SSL_KEY:-your_secure_key}
+EOF
 
 # 7. Start services with limited resources
 echo "🚀 Starting services..."
