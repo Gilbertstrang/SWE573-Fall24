@@ -8,7 +8,9 @@ const handle = app.getRequestHandler();
 
 const httpsOptions = {
   key: fs.readFileSync('frontend.key'),
-  cert: fs.readFileSync('frontend.crt')
+  cert: fs.readFileSync('frontend.crt'),
+  minVersion: 'TLSv1.2',
+  maxVersion: 'TLSv1.3'
 };
 
 app.prepare().then(() => {

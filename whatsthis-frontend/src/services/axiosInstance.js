@@ -16,9 +16,12 @@ const axiosInstance = axios.create({
   httpsAgent: new https.Agent({
     rejectUnauthorized: false,
     keepAlive: true,
-    timeout: 60000
+    timeout: 60000,
+    minVersion: 'TLSv1.2',
+    maxVersion: 'TLSv1.3',
+    secureProtocol: 'TLSv1_2_method'
   }),
-  timeout: 10000,
+  timeout: 30000,
   maxContentLength: 10000000,
   maxBodyLength: 10000000
 });
