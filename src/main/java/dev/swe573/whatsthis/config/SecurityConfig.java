@@ -59,9 +59,9 @@ public class SecurityConfig {
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowCredentials(true);
         config.setAllowedOrigins(List.of(
-            "https://frontend:3000",
-            "https://localhost:3000",
-            "https://" + System.getenv("VM_IP") + ":3000"
+            "http://frontend:3000",
+            "http://localhost:3000",
+            "http://" + System.getenv("VM_IP") + ":3000"
         ));
         config.setAllowedHeaders(List.of("Origin", "Content-Type", "Accept", "Authorization"));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));

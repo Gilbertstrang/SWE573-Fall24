@@ -44,12 +44,11 @@ echo "VM IP is: $VM_IP"
 echo "⚙️ Updating configuration files..."
 echo "⚙️ Creating env.properties file..."
 cat > env.properties << EOF
-NEXT_PUBLIC_API_URL=https://$VM_IP:8443/api
+NEXT_PUBLIC_API_URL=http://$VM_IP:8080/api
 VM_IP=$VM_IP
 POSTGRES_DB=${POSTGRES_DB:-whatsthis}
 POSTGRES_USER=${POSTGRES_USER:-your_secure_username}
 POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-your_secure_password}
-sslkey=${SSL_KEY:-your_secure_key}
 EOF
 
 # 7. Start services with limited resources
@@ -59,7 +58,7 @@ docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
 # 8. Health check
 echo "🏥 Performing health check..."
 for i in {1..30}; do
-    if curl -k -s https://localhost:8443/api/health > /dev/null; then
+    if curl -s http://localhost:8080/api/health > /dev/null; then
         echo "✅ Backend is up!"
         break
     fi
@@ -67,12 +66,8 @@ for i in {1..30}; do
     sleep 10
 done
 
-if curl -k -s https://localhost:3000 > /dev/null; then
+if curl -s http://localhost:3000 > /dev/null; then
     echo "✅ Frontend is up!"
 else
     echo "❌ Frontend failed to start"
 fi
-
-# Add after environment setup
-echo "🔐 Generating SSL certificates..."
-bash generate-certs.sh

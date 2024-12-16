@@ -1,23 +1,15 @@
-const https = require('https');
-const fs = require('fs');
+const http = require('http');
 const next = require('next');
 
 const dev = process.env.NODE_ENV !== 'production';
 const app = next({ dev });
 const handle = app.getRequestHandler();
 
-const httpsOptions = {
-  key: fs.readFileSync('frontend.key'),
-  cert: fs.readFileSync('frontend.crt'),
-  minVersion: 'TLSv1.2',
-  maxVersion: 'TLSv1.3'
-};
-
 app.prepare().then(() => {
-  https.createServer(httpsOptions, (req, res) => {
+  http.createServer((req, res) => {
     handle(req, res);
   }).listen(3000, '0.0.0.0', (err) => {
     if (err) throw err;
-    console.log(`> Ready on https://${process.env.VM_IP || 'localhost'}:3000`);
+    console.log(`> Ready on http://${process.env.VM_IP || 'localhost'}:3000`);
   });
 }); 

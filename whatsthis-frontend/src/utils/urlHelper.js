@@ -4,8 +4,8 @@ export const getFullImageUrl = (path) => {
   
   const baseUrl = process.env.NEXT_PUBLIC_API_URL
     ?.replace('/api', '')
-    ?.replace(/^http:\/\//, 'https://') || 
-    'https://localhost:8443';
+    ?.replace(/^https:\/\//, 'http://') || 
+    'http://localhost:8080';
     
   const matches = path.match(/([^/]+)$/);
   const filename = matches ? matches[0] : '';
@@ -16,7 +16,7 @@ export const getFullImageUrl = (path) => {
 };
 
 export const getApiUrl = (endpoint) => {
-  const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'https://localhost:8443/api';
+  const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api';
   
   const cleanEndpoint = endpoint.startsWith('/') ? endpoint.slice(1) : endpoint;
   

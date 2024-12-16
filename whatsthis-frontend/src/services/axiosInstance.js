@@ -1,7 +1,6 @@
 import axios from 'axios';
-import https from 'https';
 
-const baseURL = process.env.NEXT_PUBLIC_API_URL || 'https://localhost:8443/api';
+const baseURL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api';
 
 console.log('API URL:', process.env.NEXT_PUBLIC_API_URL);
 console.log('Base URL being used:', baseURL);
@@ -13,14 +12,6 @@ const axiosInstance = axios.create({
     'Accept': 'application/json'
   },
   withCredentials: true,
-  httpsAgent: new https.Agent({
-    rejectUnauthorized: false,
-    keepAlive: true,
-    timeout: 60000,
-    minVersion: 'TLSv1.2',
-    maxVersion: 'TLSv1.3',
-    secureProtocol: 'TLSv1_2_method'
-  }),
   timeout: 30000,
   maxContentLength: 10000000,
   maxBodyLength: 10000000
