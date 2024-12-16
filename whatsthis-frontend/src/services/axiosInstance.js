@@ -9,9 +9,10 @@ const axiosInstance = axios.create({
   baseURL: baseURL,
   headers: {
     'Content-Type': 'application/json',
-    'Accept': 'application/json'
+    'Accept': 'application/json',
+    'Access-Control-Allow-Origin': '*'
   },
-  withCredentials: true,
+  withCredentials: false,
   timeout: 30000,
   maxContentLength: 10000000,
   maxBodyLength: 10000000
