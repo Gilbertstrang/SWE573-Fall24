@@ -41,15 +41,14 @@ export VM_IP=$(curl -s http://metadata.google.internal/computeMetadata/v1/instan
 echo "VM IP is: $VM_IP"
 
 # 6. Update configuration files
-echo "⚙️ Updating configuration files..."
-echo "⚙️ Creating env.properties file..."
-cat > env.properties << EOF
-NEXT_PUBLIC_API_URL=http://$VM_IP:8080/api
-VM_IP=$VM_IP
-POSTGRES_DB=${POSTGRES_DB:-whatsthis}
-POSTGRES_USER=${POSTGRES_USER:-your_secure_username}
-POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-your_secure_password}
-EOF
+echo "⚙️ Setting up environment files..."
+if [ ! -f env.properties ]; then
+    echo "📝 Creating env.properties from template..."
+    cp env.properties.template env.properties
+fi
+
+# Always update VM_IP related values while keeping other values from template
+sed -i "s|\${VM_IP}|$VM_IP|g" env.properties
 
 # 7. Start services with limited resources
 echo "🚀 Starting services..."
@@ -58,15 +57,15 @@ docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
 # 8. Health check
 echo "🏥 Performing health check..."
 for i in {1..30}; do
-    if curl -s http://localhost:8080/api/health > /dev/null; then
+    if curl -s http://${VM_IP}:8080/api/health > /dev/null; then
         echo "✅ Backend is up!"
         break
     fi
     echo "Waiting for backend to start... ($i/30)"
-    sleep 10
+    sleep 3
 done
 
-if curl -s http://localhost:3000 > /dev/null; then
+if curl -s http://${VM_IP}:3000 > /dev/null; then
     echo "✅ Frontend is up!"
 else
     echo "❌ Frontend failed to start"
