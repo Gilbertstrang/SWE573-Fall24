@@ -2,12 +2,10 @@ export const getFullImageUrl = (path) => {
   if (!path) return "https://www.gravatar.com/avatar/default?d=mp";
   if (path.startsWith('http')) return path;
   
-  const baseUrl = process.env.NEXT_PUBLIC_API_URL;
-    
-  const matches = path.match(/([^/]+)$/);
-  const filename = matches ? matches[0] : '';
+  const baseUrl = process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || 
+                 `http://${process.env.NEXT_PUBLIC_VM_IP}:8080`;
   
-  const cleanPath = `uploads/${filename}`;
+  const cleanPath = path.startsWith('/uploads') ? path.slice(1) : path;
   
   return `${baseUrl}/${cleanPath}`;
 };
