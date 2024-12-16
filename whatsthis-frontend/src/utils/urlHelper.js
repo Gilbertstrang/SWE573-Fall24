@@ -3,7 +3,7 @@ export const getFullImageUrl = (path) => {
   if (path.startsWith('http')) return path;
   
   const baseUrl = process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || 
-                 `http://34.45.173.12/:8080`;
+                 `http://34.171.227.193:8080`;
   
   const cleanPath = path.startsWith('/uploads') ? path.slice(1) : path;
   
