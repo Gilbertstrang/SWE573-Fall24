@@ -2,13 +2,15 @@ FROM node:18 AS builder
 
 WORKDIR /app
 
+# Use npm ci for faster, reliable installs
 COPY package*.json ./
-RUN npm install
+RUN npm ci
 
 COPY . .
 
 ARG NEXT_PUBLIC_API_URL
 ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
+ENV NODE_ENV=production
 
 RUN npm run build
 
