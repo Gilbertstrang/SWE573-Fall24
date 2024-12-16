@@ -167,7 +167,7 @@ public class PostService {
 
         postDto.setImageUrls(
                 post.getImageUrls().stream()
-                        .map(fileName -> "/uploads/posts/" + fileName)
+                        .map(fileName -> "/uploads/" + fileName)
                         .collect(Collectors.toList())
         );
 

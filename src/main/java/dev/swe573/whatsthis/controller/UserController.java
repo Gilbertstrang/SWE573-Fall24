@@ -135,8 +135,8 @@ public class UserController {
             UserDto updatedUser = userService.updateProfilePicture(id, profilePictureUrl);
             
             return ResponseEntity.ok(Map.of(
-                "profilePictureUrl", "http://localhost:8080" + profilePictureUrl,
-                "message", "Profile picture updated successfully"
+                "profilePictureUrl", profilePictureUrl,
+                "message", "Profile updated successfully"
             ));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("error", "Failed to update profile picture"));

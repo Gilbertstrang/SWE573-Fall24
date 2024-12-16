@@ -163,12 +163,12 @@ const ProfilePage = () => {
       const data = uploadResponse.data;
       setProfileData(prev => ({
         ...prev,
-        profilePictureUrl: getFullImageUrl(data.profilePictureUrl)
+        profilePictureUrl: data.profilePictureUrl
       }));
 
       updateUser({
         ...user,
-        profilePictureUrl: getFullImageUrl(data.profilePictureUrl)
+        profilePictureUrl: data.profilePictureUrl
       });
     } catch (error) {
       console.error('Error uploading image:', error);

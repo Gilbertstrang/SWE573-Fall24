@@ -50,6 +50,7 @@ fi
 # Always update VM_IP related values while keeping other values from template
 sed -i "s|\${VM_IP}|$VM_IP|g" env.properties
 
+
 # 7. Start services with limited resources
 echo "🚀 Starting services..."
 docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
