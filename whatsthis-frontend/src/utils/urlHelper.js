@@ -4,8 +4,8 @@ export const getFullImageUrl = (path) => {
   
   const baseUrl = process.env.NEXT_PUBLIC_API_URL
     ?.replace('/api', '')
-    ?.replace(/^https:\/\//, 'http://') || 
-    'http://localhost:8080';
+    || `http://${process.env.VM_IP}:8080`
+    || 'http://localhost:8080';
     
   const matches = path.match(/([^/]+)$/);
   const filename = matches ? matches[0] : '';
