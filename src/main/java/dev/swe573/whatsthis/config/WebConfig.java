@@ -9,7 +9,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 public class WebConfig implements WebMvcConfigurer {
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
-        registry.addResourceHandler("/uploads/**")
+        registry.addResourceHandler("/api/uploads/**")
                 .addResourceLocations("file:uploads/")
                 .setCachePeriod(3600)
                 .resourceChain(true);
@@ -18,9 +18,10 @@ public class WebConfig implements WebMvcConfigurer {
     @Override
     public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/**")
-                .allowedOrigins("*")
-                .allowedMethods("*")
-                .allowedHeaders("*")
+                .allowedOrigins("*") 
+                .allowedMethods("*") 
+                .allowedHeaders("*") 
+                .exposedHeaders("Content-Type", "Content-Length") 
                 .allowCredentials(false);
     }
 } 

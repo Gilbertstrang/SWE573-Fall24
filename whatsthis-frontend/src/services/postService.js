@@ -98,8 +98,13 @@ const toggleSolution = async (postId, commentId, isRemoving) => {
 
 const getTagDetails = async (tagId) => {
   try {
-    const response = await axiosInstance.get(`/tags/search?query=${tagId}`);
-    return response.data;
+    const response = await axiosInstance.get(`/tags/search?query=${encodeURIComponent(tagId)}`);
+    const exactMatch = response.data.find(tag => 
+      tag.id === tagId || 
+      tag.name === tagId || 
+      tag.label === tagId
+    );
+    return exactMatch ? [exactMatch] : [];
   } catch (error) {
     console.error('Error fetching tag details:', error);
     throw error;
