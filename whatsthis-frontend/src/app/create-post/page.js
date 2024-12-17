@@ -162,6 +162,30 @@ const CreatePostPage = () => {
   const [editedName, setEditedName] = useState("");
   const [previewUrls, setPreviewUrls] = useState([]);
 
+  const [debouncedTagSearch] = useState(() => {
+    let timeoutId;
+    return (query) => {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+      return new Promise((resolve) => {
+        timeoutId = setTimeout(async () => {
+          if (query.length >= 2) { // Only search if 2 or more characters
+            try {
+              const response = await axiosInstance.get(`/tags/search?query=${encodeURIComponent(query)}`);
+              resolve(response.data);
+            } catch (error) {
+              console.error("Error fetching tag suggestions:", error);
+              resolve([]);
+            }
+          } else {
+            resolve([]);
+          }
+        }, 500); // Wait 500ms after last keystroke
+      });
+    };
+  });
+
   const createEmptyPart = () => ({
     partName: `Part ${parts.length + 1}`,
     material: "",
@@ -229,10 +253,7 @@ const CreatePostPage = () => {
 
     setLoadingTags(true);
     try {
-      console.log('Fetching tags for query:', query);
-      const response = await axiosInstance.get(`/tags/search?query=${encodeURIComponent(query)}`);
-      const suggestions = response.data;
-      console.log('Received tag suggestions:', suggestions);
+      const suggestions = await debouncedTagSearch(query);
       setTagSuggestions(suggestions);
     } catch (error) {
       console.error("Error fetching tag suggestions:", error);

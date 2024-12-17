@@ -8,6 +8,7 @@ import { useUser } from "../../../context/UserContext";
 import Link from "next/link";
 import axiosInstance from "../../../services/axiosInstance";
 import { getFullImageUrl } from "../../../utils/urlHelper";
+import LoginModal from '../../../components/LoginModal';
 
 export default function DetailedPostPage() {
   const router = useRouter();
@@ -31,6 +32,7 @@ export default function DetailedPostPage() {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [activePartIndex, setActivePartIndex] = useState(0);
   const [tagDetails, setTagDetails] = useState({});
+  const [showLoginModal, setShowLoginModal] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -136,8 +138,17 @@ export default function DetailedPostPage() {
     }
 
     if (!user) {
-      setError("You must be logged in to comment.");
-      return;
+      return (
+        <div className="text-center mt-4">
+          <p className="text-gray-400 mb-2">You must be logged in to comment.</p>
+          <Link 
+            href="/login" 
+            className="text-teal-400 hover:text-teal-300 underline"
+          >
+            Click here to login
+          </Link>
+        </div>
+      );
     }
 
     const commentData = {
@@ -150,11 +161,14 @@ export default function DetailedPostPage() {
 
     try {
       const comment = await commentService.addComment(commentData);
-      setComments(prev => [...prev, {
+      const newComment = {
         ...comment,
         commenterUsername: user.username,
         profilePicture: user.profilePicture || "https://www.gravatar.com/avatar/default?d=mp",
-      }]);
+      };
+      
+      setComments(prev => [...prev, newComment]);
+      
       if (parentCommentId) {
         setReplyText("");
         setReplyingTo(null);
@@ -348,7 +362,7 @@ export default function DetailedPostPage() {
               <div className="w-2/3 p-4 flex gap-4">
                 {post.widthValue && (
                   <span key="width" className="text-white">
-                    {post.widthValue}{post.widthUnit} × 
+                    {post.widthValue}{post.widthUnit} 
                   </span>
                 )}
                 {post.heightValue && (
@@ -601,26 +615,35 @@ export default function DetailedPostPage() {
                   </div>
                 </div>
               ) : (
-                <div className="p-4 text-center text-gray-400 border-b border-gray-700">
-                  Please <Link href="/login" className="text-teal-400 hover:underline">login</Link> to comment
+                <div className="text-center p-4">
+                  <p className="text-gray-400 mb-2">You must be logged in to comment.</p>
+                  <button 
+                    onClick={() => setShowLoginModal(true)}
+                    className="text-teal-400 hover:text-teal-300 underline"
+                  >
+                    Click here to login
+                  </button>
                 </div>
               )}
 
               {/* Comments List */}
               <div className="divide-y divide-gray-700">
-                {comments.length > 0 ? (
-                  comments.map((comment) => (
+                {comments
+                  .filter(comment => !comment.parentCommentId)
+                  .sort((a, b) => {
+                    // Put solution comment first
+                    if (a.id === post.solutionCommentId) return -1;
+                    if (b.id === post.solutionCommentId) return 1;
+                    // Then sort by creation date (assuming there's a createdAt field)
+                    return new Date(b.createdAt) - new Date(a.createdAt);
+                  })
+                  .map((comment) => (
                     <div key={`comment-${comment.id}`} className={`p-4 ${
                       comment.id === post.solutionCommentId ? 'ring-2 ring-green-500/50 bg-green-500/5' : ''
                     }`}>
                       {renderComment(comment)}
                     </div>
-                  ))
-                ) : (
-                  <div className="p-8 text-center text-gray-400">
-                    No comments yet. Be the first to comment!
-                  </div>
-                )}
+                  ))}
               </div>
             </div>
           </div>
@@ -778,6 +801,13 @@ export default function DetailedPostPage() {
           </div>
         </div>
       )}
+
+      {loginWarning && (
+        <div className="fixed bottom-4 right-4 bg-gray-800 text-white px-4 py-3 rounded-lg shadow-lg animate-fade-in cursor-pointer" onClick={() => setShowLoginModal(true)}>
+          Click here to login to vote
+        </div>
+      )}
+      {showLoginModal && <LoginModal onClose={() => setShowLoginModal(false)} />}
     </div>
   );
 }
