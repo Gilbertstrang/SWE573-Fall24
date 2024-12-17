@@ -2,9 +2,8 @@ export const getFullImageUrl = (path) => {
   if (!path) return "https://www.gravatar.com/avatar/default?d=mp";
   if (path.startsWith('http')) return path;
   
- 
   const baseUrl = `http://34.171.227.193:8080`;
-  const cleanPath = path.startsWith('/uploads') ? path : `uploads/${path}`;
+  const cleanPath = path.startsWith('/uploads/') ? path.substring(1) : path;
   
   return `${baseUrl}/${cleanPath}`;
 };
